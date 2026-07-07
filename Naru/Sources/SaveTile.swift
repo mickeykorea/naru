@@ -78,13 +78,18 @@ struct SourceIcon: View {
                 Image(asset)
                     .resizable()
                     .renderingMode(.template)
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 12, height: 12)
             } else {
+                // SF Symbol fills its frame; brand glyphs sit at 20/24 of
+                // theirs — shrink the globe to the same round-class key height
                 Image(systemName: "globe")
                     .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 10, height: 10)
+                    .frame(width: 12, height: 12)
             }
         }
-        .aspectRatio(contentMode: .fit)
         .foregroundStyle(Color(.systemGray))
-        .frame(width: 12, height: 12)
     }
 }
