@@ -4,6 +4,7 @@ import UIKit
 struct LinkPreview {
     var title: String?
     var image: UIImage?
+    var summary: String?
 }
 
 enum LinkMetadataFetcher {
@@ -13,10 +14,13 @@ enum LinkMetadataFetcher {
             return LinkPreview()
         }
         var preview = await fetchViaLinkPresentation(url)
-        if preview.title == nil || preview.image == nil {
+        // LinkPresentation never surfaces descriptions; the HTML pass fills
+        // summary and any other gaps
+        if preview.title == nil || preview.image == nil || preview.summary == nil {
             let fallback = await fetchViaHTML(url)
             preview.title = preview.title ?? fallback.title
             preview.image = preview.image ?? fallback.image
+            preview.summary = preview.summary ?? fallback.summary
         }
         return preview
     }
@@ -56,6 +60,13 @@ enum LinkMetadataFetcher {
             #"<title[^>]*>([^<]+)</title>"#,
         ]).map(decodeHTMLEntities)
 
+        let summary = firstMatch(in: html, patterns: [
+            #"<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']"#,
+            #"<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:description["']"#,
+            #"<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']"#,
+            #"<meta[^>]+content=["']([^"']+)["'][^>]+name=["']description["']"#,
+        ]).map(decodeHTMLEntities)
+
         var image: UIImage?
         if let imageURLString = firstMatch(in: html, patterns: [
             #"<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']"#,
@@ -65,7 +76,7 @@ enum LinkMetadataFetcher {
             image = UIImage(data: imageData)
         }
 
-        return LinkPreview(title: title, image: image)
+        return LinkPreview(title: title, image: image, summary: summary)
     }
 
     private static func firstMatch(in html: String, patterns: [String]) -> String? {

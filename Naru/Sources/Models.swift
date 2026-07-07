@@ -7,6 +7,7 @@ struct SavedItem: Identifiable, Codable, Equatable {
     var category: String
     let savedAt: Date
     var hasThumbnail: Bool
+    var summary: String?
 
     var domain: String {
         guard let host = URL(string: url.hasPrefix("http") ? url : "https://" + url)?.host else {

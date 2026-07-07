@@ -166,7 +166,8 @@ struct SaveSheet: View {
             title: (title?.isEmpty == false ? title! : domainOf(url)),
             category: category,
             savedAt: .now,
-            hasThumbnail: preview?.image != nil
+            hasThumbnail: preview?.image != nil,
+            summary: preview?.summary
         )
         onSave(item, preview?.image)
     }

@@ -4,6 +4,7 @@ struct ContentView: View {
     @StateObject private var store = ArchiveStore()
     @State private var selectedTab: String? = nil
     @State private var showSaveSheet = false
+    @State private var selectedItem: SavedItem? = nil
     @State private var toast: String? = nil
     @Namespace private var tabIndicator
 
@@ -33,6 +34,14 @@ struct ContentView: View {
         .background(Color(.systemBackground))
         .sheet(isPresented: $showSaveSheet) {
             SaveSheet(existingCategories: store.categories, onSave: save)
+        }
+        .sheet(item: $selectedItem) { item in
+            ItemDetailSheet(item: item)
+        }
+        .onAppear {
+            if ProcessInfo.processInfo.arguments.contains("-naru-demo-detail") {
+                selectedItem = store.items.first
+            }
         }
     }
 
@@ -96,13 +105,16 @@ struct ContentView: View {
         LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)],
                   alignment: .leading, spacing: 24) {
             ForEach(shown) { item in
-                SaveTile(item: item)
-                    .transition(.opacity.combined(with: .scale(scale: 0.97)))
-                    .contextMenu {
-                        Button(role: .destructive) {
-                            withAnimation(.easeOut(duration: 0.25)) { store.remove(item) }
-                        } label: { Label("Remove", systemImage: "trash") }
-                    }
+                Button { selectedItem = item } label: {
+                    SaveTile(item: item)
+                }
+                .buttonStyle(PressableStyle())
+                .transition(.opacity.combined(with: .scale(scale: 0.97)))
+                .contextMenu {
+                    Button(role: .destructive) {
+                        withAnimation(.easeOut(duration: 0.25)) { store.remove(item) }
+                    } label: { Label("Remove", systemImage: "trash") }
+                }
             }
         }
         // new identity per tab: kills cross-tab move-diffing, so switching
