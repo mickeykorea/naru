@@ -19,6 +19,29 @@ def connect_api!
   )
 end
 
+def asc_request(req_class, path, body = nil)
+  require 'net/http'
+  require 'json'
+  uri = URI("https://api.appstoreconnect.apple.com#{path}")
+  req = req_class.new(uri)
+  req["Authorization"] = "Bearer #{Spaceship::ConnectAPI.token.text}"
+  req["Content-Type"] = "application/json"
+  req.body = body.to_json if body
+  Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { |http| http.request(req) }
+end
+
+def asc_post(path, body)
+  asc_request(Net::HTTP::Post, path, body)
+end
+
+def asc_get(path)
+  asc_request(Net::HTTP::Get, path)
+end
+
+def asc_patch(path, body)
+  asc_request(Net::HTTP::Patch, path, body)
+end
+
 platform :ios do
   desc "Latest build processing state (PROCESSING → VALID means live in TestFlight)"
   lane :status do
@@ -68,6 +91,96 @@ platform :ios do
     res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { |http| http.request(req) }
     UI.user_error!("Tester add failed: #{res.code} #{res.body}") unless res.code.to_i == 201
     UI.success("Added #{email} to internal testing — check the TestFlight app")
+  end
+
+  desc "Invite an external tester and distribute the latest build (first build needs Beta App Review)"
+  lane :external do |options|
+    email = options[:email] || UI.user_error!("Pass email:...")
+    connect_api!
+    app = Spaceship::ConnectAPI::App.find(APP_ID)
+
+    group = app.get_beta_groups.find { |g| g.name == "Friends" }
+    if group.nil?
+      res = asc_post("/v1/betaGroups", { data: { type: "betaGroups",
+        attributes: { name: "Friends" },
+        relationships: { app: { data: { type: "apps", id: app.id } } } } })
+      UI.user_error!("Group creation failed: #{res.code} #{res.body}") unless res.code.to_i == 201
+      group_id = JSON.parse(res.body).dig("data", "id")
+      UI.success("Created external group 'Friends'")
+    else
+      group_id = group.id
+    end
+
+    res = asc_post("/v1/betaTesters", { data: { type: "betaTesters",
+      attributes: { email: email },
+      relationships: { betaGroups: { data: [{ type: "betaGroups", id: group_id }] } } } })
+    if res.code.to_i == 201
+      UI.success("Invited #{email} to 'Friends'")
+    elsif res.code.to_i == 409
+      UI.message("#{email} already invited")
+    else
+      UI.user_error!("Tester add failed: #{res.code} #{res.body}")
+    end
+
+    # pilot's distribute_only crashes in non-interactive mode (fastlane#20974),
+    # so drive the API directly: what-to-test, group link, beta review submission
+    res = asc_get("/v1/builds?filter[app]=#{app.id}&sort=-uploadedDate&limit=1")
+    build = JSON.parse(res.body)["data"].first || UI.user_error!("No builds found")
+    build_id = build["id"]
+    UI.message("Latest build: #{build.dig('attributes', 'version')} (#{build_id})")
+
+    res = asc_post("/v1/betaBuildLocalizations", { data: { type: "betaBuildLocalizations",
+      attributes: { locale: "en-US",
+        whatsNew: "First Naru build — paste links into your inbox; they persist across launches." },
+      relationships: { build: { data: { type: "builds", id: build_id } } } } })
+    UI.message("What-to-test: #{res.code}")
+
+    res = asc_post("/v1/betaGroups/#{group_id}/relationships/builds",
+      { data: [{ type: "builds", id: build_id }] })
+    UI.user_error!("Build-to-group link failed: #{res.code} #{res.body}") unless res.code.to_i == 204
+    UI.success("Build added to 'Friends'")
+
+    beta_desc = "Naru is a personal content inbox — paste links you want to keep " \
+                "and they arrive in one place. Early build validating the release pipeline."
+    res = asc_get("/v1/apps/#{app.id}/betaAppLocalizations")
+    loc = JSON.parse(res.body)["data"].find { |l| l.dig("attributes", "locale") == "en-US" }
+    if loc.nil?
+      res = asc_post("/v1/betaAppLocalizations", { data: { type: "betaAppLocalizations",
+        attributes: { locale: "en-US", description: beta_desc, feedbackEmail: "hello@mickeyoh.com" },
+        relationships: { app: { data: { type: "apps", id: app.id } } } } })
+      UI.message("Beta app description created: #{res.code}")
+    elsif loc.dig("attributes", "description").to_s.empty?
+      res = asc_patch("/v1/betaAppLocalizations/#{loc['id']}", { data: {
+        type: "betaAppLocalizations", id: loc["id"],
+        attributes: { description: beta_desc, feedbackEmail: "hello@mickeyoh.com" } } })
+      UI.message("Beta app description updated: #{res.code}")
+    end
+
+    res = asc_get("/v1/apps/#{app.id}/betaAppReviewDetail")
+    detail = JSON.parse(res.body)["data"]
+    if detail && detail.dig("attributes", "contactEmail").to_s.empty?
+      attrs = { contactEmail: "hello@mickeyoh.com", contactFirstName: "Mickey", contactLastName: "Oh" }
+      attrs[:contactPhone] = options[:phone] if options[:phone]
+      res = asc_patch("/v1/betaAppReviewDetails/#{detail['id']}", { data: {
+        type: "betaAppReviewDetails", id: detail["id"], attributes: attrs } })
+      UI.message("Beta review contact info: #{res.code}")
+    end
+
+    res = asc_post("/v1/betaAppReviewSubmissions", { data: { type: "betaAppReviewSubmissions",
+      relationships: { build: { data: { type: "builds", id: build_id } } } } })
+    if res.code.to_i == 201
+      UI.success("Submitted for Beta App Review — external testers get it once approved")
+    else
+      UI.important("Beta review submission: #{res.code} #{res.body}")
+    end
+  end
+
+  desc "Debug: dump beta app localizations"
+  lane :debug_loc do
+    connect_api!
+    app = Spaceship::ConnectAPI::App.find(APP_ID)
+    res = asc_get("/v1/apps/#{app.id}/betaAppLocalizations")
+    UI.important("RESPONSE #{res.code}: #{res.body}")
   end
 
   desc "One-time: register bundle ID and create the app in App Store Connect"
