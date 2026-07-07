@@ -15,22 +15,36 @@ struct ContentView: View {
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    header
-                    if !store.items.isEmpty { tabs }
-                    if store.items.isEmpty {
-                        emptyState
-                    } else {
-                        grid
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        header
+                        if !store.items.isEmpty { tabs }
+                        if store.items.isEmpty {
+                            emptyState
+                        } else {
+                            grid
+                        }
                     }
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 120)
                 }
-                .padding(.horizontal, 20)
-                .padding(.bottom, 120)
+                .scrollEdgeEffectStyle(.soft, for: .top)
+                .onAppear {
+                    #if DEBUG
+                    if ProcessInfo.processInfo.arguments.contains("-naru-demo-scroll"),
+                       let last = store.items.last?.id {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                            withAnimation { proxy.scrollTo(last, anchor: .bottom) }
+                        }
+                    }
+                    #endif
+                }
             }
             saveButton
             if let toast { toastView(toast) }
         }
+        .overlay(alignment: .top) { statusBarFrost }
         .background(Color(.systemBackground))
         .sheet(isPresented: $showSaveSheet) {
             SaveSheet(existingCategories: store.categories, onSave: save)
@@ -111,6 +125,7 @@ struct ContentView: View {
                     SaveTile(item: item)
                 }
                 .buttonStyle(PressableStyle())
+                .id(item.id)
                 .transition(.opacity.combined(with: .scale(scale: 0.97)))
                 .contextMenu {
                     Button(role: .destructive) {
@@ -136,6 +151,27 @@ struct ContentView: View {
         .padding(.top, 60)
     }
 
+    // scrollEdgeEffectStyle only frosts system bars; Naru has no nav bar,
+    // so the status-bar frost is drawn manually: material masked to
+    // dissolve downward, invisible until content scrolls beneath it
+    private var statusBarFrost: some View {
+        Rectangle()
+            .fill(.ultraThinMaterial)
+            .frame(height: 76)
+            .mask(
+                LinearGradient(
+                    stops: [
+                        .init(color: .black, location: 0),
+                        .init(color: .black, location: 0.65),
+                        .init(color: .clear, location: 1),
+                    ],
+                    startPoint: .top, endPoint: .bottom
+                )
+            )
+            .ignoresSafeArea(edges: .top)
+            .allowsHitTesting(false)
+    }
+
     private var saveButton: some View {
         Button { showSaveSheet = true } label: {
             HStack(spacing: 8) {
@@ -146,10 +182,9 @@ struct ContentView: View {
             .foregroundStyle(Color(.systemBackground))
             .padding(.horizontal, 28)
             .padding(.vertical, 15)
-            .background(Color.primary, in: Capsule())
         }
+        .glassEffect(.regular.tint(.primary.opacity(0.92)).interactive())
         .padding(.bottom, 24)
-        .shadow(color: .black.opacity(0.12), radius: 16, y: 6)
     }
 
     private func toastView(_ message: String) -> some View {
@@ -158,7 +193,7 @@ struct ContentView: View {
             .foregroundStyle(Color(.systemBackground))
             .padding(.horizontal, 18)
             .padding(.vertical, 10)
-            .background(Color.primary, in: Capsule())
+            .glassEffect(.regular.tint(.primary.opacity(0.92)))
             .padding(.bottom, 92)
             .transition(.move(edge: .bottom).combined(with: .opacity))
     }

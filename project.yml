@@ -2,7 +2,7 @@ name: Naru
 options:
   bundleIdPrefix: com.mickeyoh
   deploymentTarget:
-    iOS: "17.0"
+    iOS: "26.0"
   createIntermediateGroups: true
 
 targets:

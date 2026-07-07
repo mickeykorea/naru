@@ -50,6 +50,15 @@ No textures, no gradients, no themed palettes.
 - Tile appearance: gentle fade+scale(0.97→1), never slides across screen
 - Later: drag-to-organize collections (dnd kit feel), command-style search sheet (cmdk feel)
 
+## Materials (Liquid Glass)
+- Floating chrome over scrolling content uses Liquid Glass: the Save pill
+  (`glassEffect(.regular.tint(.primary.opacity(0.92)).interactive())`) and
+  the toast. In-sheet buttons stay solid black per the Genie reference.
+- Status-bar frost: Naru has no nav bar, so `scrollEdgeEffectStyle` won't
+  render — draw the frost manually (ultraThinMaterial, 76pt band,
+  gradient-masked to dissolve at 65%→100%, hit-testing off).
+- Min iOS 26 (raised from 17 for glass APIs).
+
 ## Source icons
 Brand logos are bundled Simple Icons SVGs (Assets.xcassets/Brands),
 template-rendered and tinted systemGray — never full-color favicons.
