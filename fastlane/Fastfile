@@ -32,6 +32,44 @@ platform :ios do
     end
   end
 
+  desc "One-time: internal-tester group with access to all builds + add tester"
+  lane :invite do |options|
+    connect_api!
+    require 'net/http'
+    require 'json'
+    email = options[:email] || UI.user_error!("Pass email:...")
+    app = Spaceship::ConnectAPI::App.find(APP_ID)
+
+    group = app.get_beta_groups.find { |g| g.is_internal_group }
+    if group.nil?
+      uri = URI("https://api.appstoreconnect.apple.com/v1/betaGroups")
+      req = Net::HTTP::Post.new(uri)
+      req["Authorization"] = "Bearer #{Spaceship::ConnectAPI.token.text}"
+      req["Content-Type"] = "application/json"
+      req.body = { data: { type: "betaGroups",
+        attributes: { name: "Team", isInternalGroup: true, hasAccessToAllBuilds: true },
+        relationships: { app: { data: { type: "apps", id: app.id } } } } }.to_json
+      res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { |http| http.request(req) }
+      UI.user_error!("Group creation failed: #{res.code} #{res.body}") unless res.code.to_i == 201
+      group_id = JSON.parse(res.body).dig("data", "id")
+      UI.success("Created internal group 'Team'")
+    else
+      group_id = group.id
+      UI.message("Using existing internal group '#{group.name}'")
+    end
+
+    uri = URI("https://api.appstoreconnect.apple.com/v1/betaTesters")
+    req = Net::HTTP::Post.new(uri)
+    req["Authorization"] = "Bearer #{Spaceship::ConnectAPI.token.text}"
+    req["Content-Type"] = "application/json"
+    req.body = { data: { type: "betaTesters",
+      attributes: { email: email },
+      relationships: { betaGroups: { data: [{ type: "betaGroups", id: group_id }] } } } }.to_json
+    res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { |http| http.request(req) }
+    UI.user_error!("Tester add failed: #{res.code} #{res.body}") unless res.code.to_i == 201
+    UI.success("Added #{email} to internal testing — check the TestFlight app")
+  end
+
   desc "One-time: register bundle ID and create the app in App Store Connect"
   lane :bootstrap do
     connect_api!
