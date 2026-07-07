@@ -52,6 +52,10 @@ Brand logos are bundled Simple Icons SVGs (Assets.xcassets/Brands),
 template-rendered and tinted systemGray — never full-color favicons.
 Unknown domains get the SF Symbol globe. Add brands by dropping a new
 Simple Icons SVG imageset and one mapping row in SourceIcon.
+Glyphs are optically normalized to icon-grid key heights on the 24-unit
+canvas (round 20 · default 19.4 · dense square 18.6 · solid rect 18.8 ·
+wide width-capped 22.5) — when adding an icon, wrap its path in the same
+transform pattern; never ship a raw 24×24 Simple Icons file.
 
 ## Anti-rules (learned, do not revisit)
 - No dark-navy + teal theme. No warm-paper/museum/heritage styling.
