@@ -1,0 +1,26 @@
+# Secrets — never commit
+fastlane/.env
+*.p8
+*.p12
+*.mobileprovision
+*.cer
+
+# Xcode / build
+DerivedData/
+build/
+*.xcarchive
+*.ipa
+*.dSYM.zip
+*.dSYM
+xcuserdata/
+
+# XcodeGen output (regenerated from project.yml)
+Naru.xcodeproj/
+
+# fastlane artifacts
+fastlane/report.xml
+fastlane/README.md
+fastlane/test_output/
+
+# macOS
+.DS_Store
