@@ -13,14 +13,44 @@ end
 platform :ios do
   desc "One-time: register bundle ID and create the app in App Store Connect"
   lane :bootstrap do
-    produce(
-      api_key: asc_key,
-      app_identifier: APP_ID,
-      app_name: "Naru",
-      language: "en-US",
-      app_version: "0.1.0",
-      sku: "naru-ios"
+    require 'spaceship'
+    Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
+      key_id: ENV.fetch("ASC_KEY_ID"),
+      issuer_id: ENV.fetch("ASC_ISSUER_ID"),
+      filepath: File.expand_path(ENV.fetch("ASC_KEY_PATH"))
     )
+
+    if Spaceship::ConnectAPI::BundleId.find(APP_ID)
+      UI.message("Bundle ID #{APP_ID} already registered")
+    else
+      # Raw API call: spaceship 2.237.0's BundleId.create sends a 'capability'
+      # relationship Apple no longer accepts (fastlane/fastlane#29596)
+      require 'net/http'
+      require 'json'
+      uri = URI("https://api.appstoreconnect.apple.com/v1/bundleIds")
+      req = Net::HTTP::Post.new(uri)
+      req["Authorization"] = "Bearer #{Spaceship::ConnectAPI.token.text}"
+      req["Content-Type"] = "application/json"
+      req.body = { data: { type: "bundleIds", attributes: {
+        name: "Naru", identifier: APP_ID, platform: "IOS" } } }.to_json
+      res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { |http| http.request(req) }
+      UI.user_error!("Bundle ID registration failed: #{res.code} #{res.body}") unless res.code.to_i == 201
+      UI.success("Registered bundle ID #{APP_ID}")
+    end
+
+    if Spaceship::ConnectAPI::App.find(APP_ID)
+      UI.message("App record already exists in App Store Connect")
+    else
+      Spaceship::ConnectAPI::App.create(
+        name: "Naru",
+        version_string: "0.1.0",
+        sku: "naru-ios",
+        primary_locale: "en-US",
+        bundle_id: APP_ID,
+        platforms: [Spaceship::ConnectAPI::Platform::IOS]
+      )
+      UI.success("Created app record 'Naru' in App Store Connect")
+    end
   end
 
   desc "One-time per machine: distribution certificate + App Store profile"
