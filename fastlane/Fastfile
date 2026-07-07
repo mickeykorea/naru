@@ -10,15 +10,31 @@ def asc_key
   )
 end
 
+def connect_api!
+  require 'spaceship'
+  Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
+    key_id: ENV.fetch("ASC_KEY_ID"),
+    issuer_id: ENV.fetch("ASC_ISSUER_ID"),
+    filepath: File.expand_path(ENV.fetch("ASC_KEY_PATH"))
+  )
+end
+
 platform :ios do
+  desc "Latest build processing state (PROCESSING → VALID means live in TestFlight)"
+  lane :status do
+    connect_api!
+    app = Spaceship::ConnectAPI::App.find(APP_ID)
+    build = app.get_builds(sort: "-uploadedDate").first
+    if build.nil?
+      UI.important("STATUS: no builds yet")
+    else
+      UI.important("STATUS: build #{build.version} #{build.processing_state}")
+    end
+  end
+
   desc "One-time: register bundle ID and create the app in App Store Connect"
   lane :bootstrap do
-    require 'spaceship'
-    Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
-      key_id: ENV.fetch("ASC_KEY_ID"),
-      issuer_id: ENV.fetch("ASC_ISSUER_ID"),
-      filepath: File.expand_path(ENV.fetch("ASC_KEY_PATH"))
-    )
+    connect_api!
 
     if Spaceship::ConnectAPI::BundleId.find(APP_ID)
       UI.message("Bundle ID #{APP_ID} already registered")
