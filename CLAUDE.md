@@ -73,3 +73,9 @@ can't enforce: how you think, how you plan, how you manage context.
   patterns exactly. My working code is a better spec than my description.
 - Work from raw error data. Don't guess. If a bug report has no output,
   ask for it.
+
+## Design System
+Always read DESIGN.md before making any visual or UI decisions.
+All font choices, colors, spacing, and aesthetic direction are defined there.
+Do not deviate without explicit user approval.
+In QA mode, flag any code that doesn't match DESIGN.md.
