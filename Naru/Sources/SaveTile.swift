@@ -53,18 +53,38 @@ struct SaveTile: View {
 struct SourceIcon: View {
     let domain: String
 
+    private static let brands: [(match: String, asset: String)] = [
+        ("x.com", "brand-x"), ("twitter", "brand-x"),
+        ("instagram", "brand-instagram"), ("notion", "brand-notion"),
+        ("spotify", "brand-spotify"),
+        ("youtube", "brand-youtube"), ("youtu.be", "brand-youtube"),
+        ("reddit", "brand-reddit"),
+        ("pinterest", "brand-pinterest"), ("tiktok", "brand-tiktok"),
+        ("github", "brand-github"), ("medium.com", "brand-medium"),
+        ("substack", "brand-substack"), ("netflix", "brand-netflix"),
+        ("figma", "brand-figma"), ("facebook", "brand-facebook"),
+        ("threads", "brand-threads"), ("t.me", "brand-telegram"),
+        ("telegram", "brand-telegram"), ("whatsapp", "brand-whatsapp"),
+        ("twitch", "brand-twitch"), ("soundcloud", "brand-soundcloud"),
+        ("apple.com", "brand-apple"), ("google", "brand-google"),
+        ("naver", "brand-naver"), ("kakao", "brand-kakaotalk"),
+        ("nytimes", "brand-newyorktimes"), ("dribbble", "brand-dribbble"),
+        ("behance", "brand-behance"), ("vimeo", "brand-vimeo"),
+    ]
+
     var body: some View {
-        AsyncImage(url: URL(string: "https://www.google.com/s2/favicons?domain=\(domain)&sz=64")) { phase in
-            switch phase {
-            case .success(let image):
-                image.resizable()
-            default:
+        Group {
+            if let asset = Self.brands.first(where: { domain.contains($0.match) })?.asset {
+                Image(asset)
+                    .resizable()
+                    .renderingMode(.template)
+            } else {
                 Image(systemName: "globe")
                     .resizable()
-                    .foregroundStyle(Color(.systemGray))
             }
         }
-        .frame(width: 13, height: 13)
-        .clipShape(RoundedRectangle(cornerRadius: 3))
+        .aspectRatio(contentMode: .fit)
+        .foregroundStyle(Color(.systemGray))
+        .frame(width: 12, height: 12)
     }
 }
