@@ -6,6 +6,9 @@ struct ContentView: View {
     @State private var showSaveSheet = false
     @State private var selectedItem: SavedItem? = nil
     @State private var toast: String? = nil
+    @State private var saveButtonHidden = false
+    @State private var lastScrollOffset: CGFloat = 0
+    @State private var scrollRun: CGFloat = 0
     @Namespace private var tabIndicator
 
     private var shown: [SavedItem] {
@@ -30,6 +33,38 @@ struct ContentView: View {
                     .padding(.bottom, 120)
                 }
                 .scrollEdgeEffectStyle(.soft, for: .top)
+                .onScrollGeometryChange(
+                    for: CGRect.self,
+                    // offset is inset-relative: rest position is -contentInsets.top,
+                    // bottom limit is contentSize - container + contentInsets.bottom
+                    of: { CGRect(x: $0.contentOffset.y,
+                                 y: -$0.contentInsets.top,
+                                 width: $0.contentSize.height - $0.containerSize.height
+                                        + $0.contentInsets.bottom,
+                                 height: 0) }
+                ) { _, value in
+                    let offset = value.origin.x
+                    let minOffset = value.origin.y
+                    let maxOffset = value.size.width
+                    let delta = offset - lastScrollOffset
+                    lastScrollOffset = offset
+                    if offset <= minOffset + 8 {
+                        saveButtonHidden = false
+                        scrollRun = 0
+                        return
+                    }
+                    // rubber-band zones produce phantom direction reversals
+                    if offset >= maxOffset - 1 { return }
+                    // accumulate displacement in the current direction so slow
+                    // scrolls still trigger; reset on direction change
+                    if (delta >= 0) != (scrollRun >= 0) { scrollRun = 0 }
+                    scrollRun += delta
+                    if scrollRun > 12 {
+                        saveButtonHidden = true
+                    } else if scrollRun < -12 {
+                        saveButtonHidden = false
+                    }
+                }
                 .onAppear {
                     #if DEBUG
                     if ProcessInfo.processInfo.arguments.contains("-naru-demo-scroll"),
@@ -174,6 +209,8 @@ struct ContentView: View {
         }
         .glassEffect(.regular.tint(.primary.opacity(0.92)).interactive())
         .padding(.bottom, 24)
+        .offset(y: saveButtonHidden ? 130 : 0)
+        .animation(.snappy(duration: 0.3, extraBounce: 0), value: saveButtonHidden)
     }
 
     private func toastView(_ message: String) -> some View {
