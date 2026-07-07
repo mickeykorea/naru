@@ -5,6 +5,7 @@ struct ContentView: View {
     @State private var selectedTab: String? = nil
     @State private var showSaveSheet = false
     @State private var toast: String? = nil
+    @Namespace private var tabIndicator
 
     private var shown: [SavedItem] {
         guard let tab = selectedTab else { return store.items }
@@ -59,13 +60,16 @@ struct ContentView: View {
                     tabItem(cat, label: cat, count: store.items.filter { $0.category == cat }.count)
                 }
             }
+            // the indicator slide is the only animated part of a tab switch;
+            // grid content swaps instantly (filtering is replacement, not movement)
+            .animation(.snappy(duration: 0.25, extraBounce: 0), value: selectedTab)
         }
         .padding(.bottom, 18)
     }
 
     private func tabItem(_ value: String?, label: String, count: Int) -> some View {
         Button {
-            withAnimation(.easeOut(duration: 0.2)) { selectedTab = value }
+            selectedTab = value
         } label: {
             VStack(spacing: 6) {
                 HStack(spacing: 5) {
@@ -73,9 +77,15 @@ struct ContentView: View {
                     Text("\(count)").font(.caption2).foregroundStyle(Color(.systemGray))
                 }
                 .foregroundStyle(selectedTab == value ? .primary : Color(.systemGray))
-                Rectangle()
-                    .fill(selectedTab == value ? Color.primary : .clear)
-                    .frame(height: 2)
+                ZStack {
+                    Rectangle().fill(.clear).frame(height: 2)
+                    if selectedTab == value {
+                        Rectangle()
+                            .fill(Color.primary)
+                            .frame(height: 2)
+                            .matchedGeometryEffect(id: "tabline", in: tabIndicator)
+                    }
+                }
             }
             .fixedSize()
         }
@@ -95,7 +105,10 @@ struct ContentView: View {
                     }
             }
         }
-        .animation(.easeOut(duration: 0.3), value: shown)
+        // new identity per tab: kills cross-tab move-diffing, so switching
+        // categories swaps content instantly instead of sliding cards around.
+        // Save/remove still animate via withAnimation at their call sites.
+        .id(selectedTab)
     }
 
     private var emptyState: some View {
