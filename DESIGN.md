@@ -37,7 +37,10 @@ No textures, no gradients, no themed palettes.
 - Category navigation: horizontal underline tabs with count (Cosmos style)
 - Primary actions float: capsule bar/button at bottom (Cosmos floating nav)
 - Margins 20pt, gutter 12pt, section spacing 28pt
-- Sheets: white, corner radius 24 top, list rows, big black Done pill
+- Sheets: white, corner radius 24-28 top, list rows, big black Done pill
+- Sheet grabber: custom 36×5 capsule (systemGray4) at 10pt from top — the
+  system indicator's 5pt placement is too tight against large corner radii;
+  content below the grabber gets ≥24pt clearance (hero uses 34pt top inset)
 
 ## Motion
 - Restraint: 200-350ms, ease-out; no spring bounce on chrome

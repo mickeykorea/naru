@@ -22,7 +22,7 @@ struct ItemDetailSheet: View {
             VStack(spacing: 0) {
                 hero
                     .padding(.horizontal, 12)
-                    .padding(.top, 24)
+                    .padding(.top, 34)
 
                 Text(item.title)
                     .font(.title3.weight(.semibold))
@@ -74,8 +74,16 @@ struct ItemDetailSheet: View {
             .padding(.bottom, 48)
         }
         .presentationDetents([.medium, .large], selection: $detent)
-        .presentationDragIndicator(.visible)
+        .presentationDragIndicator(.hidden)
         .presentationCornerRadius(28)
+        // custom grabber, lower than the system's 5pt (matches the Genie
+        // reference; the 28pt corner radius needs the extra air)
+        .overlay(alignment: .top) {
+            Capsule()
+                .fill(Color(.systemGray4))
+                .frame(width: 36, height: 5)
+                .padding(.top, 10)
+        }
         .onAppear {
             if ProcessInfo.processInfo.arguments.contains("-naru-demo-large") {
                 detent = .large
