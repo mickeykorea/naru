@@ -22,7 +22,7 @@ struct ItemDetailSheet: View {
             VStack(spacing: 0) {
                 hero
                     .padding(.horizontal, 12)
-                    .padding(.top, 12)
+                    .padding(.top, 24)
 
                 Text(item.title)
                     .font(.title3.weight(.semibold))
