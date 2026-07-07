@@ -155,19 +155,8 @@ struct ContentView: View {
     // so the status-bar frost is drawn manually: material masked to
     // dissolve downward, invisible until content scrolls beneath it
     private var statusBarFrost: some View {
-        Rectangle()
-            .fill(.ultraThinMaterial)
-            .frame(height: 76)
-            .mask(
-                LinearGradient(
-                    stops: [
-                        .init(color: .black, location: 0),
-                        .init(color: .black, location: 0.65),
-                        .init(color: .clear, location: 1),
-                    ],
-                    startPoint: .top, endPoint: .bottom
-                )
-            )
+        VariableBlurView(maxBlurRadius: 9)
+            .frame(height: 82)
             .ignoresSafeArea(edges: .top)
             .allowsHitTesting(false)
     }

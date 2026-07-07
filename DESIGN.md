@@ -55,8 +55,12 @@ No textures, no gradients, no themed palettes.
   (`glassEffect(.regular.tint(.primary.opacity(0.92)).interactive())`) and
   the toast. In-sheet buttons stay solid black per the Genie reference.
 - Status-bar frost: Naru has no nav bar, so `scrollEdgeEffectStyle` won't
-  render — draw the frost manually (ultraThinMaterial, 76pt band,
-  gradient-masked to dissolve at 65%→100%, hit-testing off).
+  render. Use `VariableBlurView` (Sources/VariableBlur.swift) — a true
+  progressive blur (radius 9, 82pt band): content stays saturated and
+  defocuses toward the edge, iMessage-style. NOT a masked material — that
+  adds a milky veil (rejected). Note: taps CAFilter("variableBlur")
+  (private API, industry-common); fallback if ever rejected is the
+  gradient-masked ultraThinMaterial.
 - Min iOS 26 (raised from 17 for glass APIs).
 
 ## Source icons
