@@ -85,9 +85,11 @@ struct ItemDetailSheet: View {
                 .padding(.top, 10)
         }
         .onAppear {
+            #if DEBUG
             if ProcessInfo.processInfo.arguments.contains("-naru-demo-large") {
                 detent = .large
             }
+            #endif
         }
     }
 

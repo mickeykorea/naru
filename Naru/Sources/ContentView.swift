@@ -39,9 +39,11 @@ struct ContentView: View {
             ItemDetailSheet(item: item)
         }
         .onAppear {
+            #if DEBUG
             if ProcessInfo.processInfo.arguments.contains("-naru-demo-detail") {
                 selectedItem = store.items.first
             }
+            #endif
         }
     }
 
