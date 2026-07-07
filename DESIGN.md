@@ -47,6 +47,12 @@ No textures, no gradients, no themed palettes.
 - Tile appearance: gentle fade+scale(0.97→1), never slides across screen
 - Later: drag-to-organize collections (dnd kit feel), command-style search sheet (cmdk feel)
 
+## Source icons
+Brand logos are bundled Simple Icons SVGs (Assets.xcassets/Brands),
+template-rendered and tinted systemGray — never full-color favicons.
+Unknown domains get the SF Symbol globe. Add brands by dropping a new
+Simple Icons SVG imageset and one mapping row in SourceIcon.
+
 ## Anti-rules (learned, do not revisit)
 - No dark-navy + teal theme. No warm-paper/museum/heritage styling.
 - No decorative texture, no colored category chips, no card borders.
