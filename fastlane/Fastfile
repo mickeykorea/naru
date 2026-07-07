@@ -51,7 +51,10 @@ platform :ios do
     if build.nil?
       UI.important("STATUS: no builds yet")
     else
-      UI.important("STATUS: build #{build.version} #{build.processing_state}")
+      res = asc_get("/v1/builds/#{build.id}/buildBetaDetail")
+      beta = JSON.parse(res.body).dig("data", "attributes") || {}
+      UI.important("STATUS: build #{build.version} #{build.processing_state} " \
+                   "internal=#{beta['internalBuildState']} external=#{beta['externalBuildState']}")
     end
   end
 
