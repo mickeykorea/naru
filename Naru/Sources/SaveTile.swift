@@ -12,7 +12,7 @@ struct SaveTile: View {
                     .lineLimit(1)
                 HStack(spacing: 5) {
                     SourceIcon(domain: item.domain)
-                    Text("\(item.domain) · \(item.savedAt.formatted(.relative(presentation: .numeric)))")
+                    Text("\(item.domain) · \(item.savedAt.formatted(.relative(presentation: .named)))")
                         .font(.footnote)
                         .foregroundStyle(Color(.systemGray))
                         .lineLimit(1)

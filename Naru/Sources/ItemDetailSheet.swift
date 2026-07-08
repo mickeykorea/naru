@@ -33,7 +33,7 @@ struct ItemDetailSheet: View {
 
                 HStack(spacing: 5) {
                     SourceIcon(domain: item.domain)
-                    Text("\(item.domain) · saved \(item.savedAt.formatted(.relative(presentation: .numeric)))")
+                    Text("\(item.domain) · saved \(item.savedAt.formatted(.relative(presentation: .named)))")
                         .font(.footnote)
                         .foregroundStyle(Color(.systemGray))
                 }

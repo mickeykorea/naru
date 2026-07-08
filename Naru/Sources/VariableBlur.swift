@@ -1,11 +1,11 @@
 import SwiftUI
 import UIKit
-import CoreImage.CIFilterBuiltins
 
 // Progressive ("variable") blur like the system status-bar frost in
 // Messages: content stays saturated, defocusing toward the edge. There is
 // no public API; this taps CAFilter("variableBlur") the way system apps
-// do. If App Review ever objects, swap for the gradient-masked material.
+// do. Every private-structure assumption is checked — if any fails, the
+// view hides itself: no frost beats a broken white box.
 struct VariableBlurView: UIViewRepresentable {
     var maxBlurRadius: CGFloat = 10
 
@@ -18,28 +18,35 @@ struct VariableBlurView: UIViewRepresentable {
 
 final class VariableBlurUIView: UIVisualEffectView {
 
+    // the backdrop hosts a CABackdropLayer; on-device iOS 26 does not keep
+    // it as subviews.first the way the simulator does, so match by layer
+    // class instead of position
+    private var backdrop: UIView? {
+        subviews.first { String(describing: type(of: $0.layer)).contains("Backdrop") }
+    }
+
     init(maxBlurRadius: CGFloat) {
         super.init(effect: UIBlurEffect(style: .regular))
 
-        guard let filterClass = NSClassFromString("CAFilter") as? NSObject.Type,
+        guard let backdrop,
+              let filterClass = NSClassFromString("CAFilter") as? NSObject.Type,
               let variableBlur = filterClass
                 .perform(NSSelectorFromString("filterWithType:"), with: "variableBlur")?
                 .takeUnretainedValue() as? NSObject,
               let gradient = Self.gradientMask() else {
+            isHidden = true
             return
         }
 
         variableBlur.setValue(maxBlurRadius, forKey: "inputRadius")
         variableBlur.setValue(gradient, forKey: "inputMaskImage")
         variableBlur.setValue(true, forKey: "inputNormalizeEdges")
+        backdrop.layer.filters = [variableBlur]
 
-        // first subview is the backdrop (gets the filter); the rest are
-        // tint/dimming layers that would add the milky veil — drop them
-        if let backdrop = subviews.first {
-            backdrop.layer.filters = [variableBlur]
-        }
-        for extraneous in subviews.dropFirst() {
-            extraneous.alpha = 0
+        // remaining effect subviews are tint/dimming layers — they add the
+        // milky veil, so drop them
+        for subview in subviews where subview !== backdrop {
+            subview.alpha = 0
         }
     }
 
@@ -47,8 +54,9 @@ final class VariableBlurUIView: UIVisualEffectView {
 
     override func didMoveToWindow() {
         super.didMoveToWindow()
-        // keep the filter's coordinate space upright regardless of screen scale
-        guard let window, let backdrop = subviews.first else { return }
+        // keep the filter's coordinate space aligned with the screen scale;
+        // without this the blurred sample renders offset/magnified
+        guard let window, let backdrop else { return }
         backdrop.layer.setValue(window.screen.scale, forKey: "scale")
     }
 
