@@ -153,3 +153,35 @@ final class HeroCollapseTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(floored, 118, "hero must not collapse past the floor")
     }
 }
+
+final class SearchTests: XCTestCase {
+
+    func testSearchFiltersAcrossFields() throws {
+        let app = XCUIApplication(bundleIdentifier: "com.mickeyoh.naru")
+        app.launch()
+
+        let button = app.buttons["search-button"]
+        XCTAssertTrue(button.waitForExistence(timeout: 10))
+        button.tap()
+
+        let field = app.textFields["Search your archive…"]
+        XCTAssertTrue(field.waitForExistence(timeout: 8))
+        app.typeText("deep sea")
+        sleep(1)
+
+        // scope to tagged result tiles — the main grid behind the sheet
+        // stays in the accessibility tree and would pollute global queries
+        let results = app.buttons.matching(identifier: "search-result")
+        XCTAssertTrue(results.matching(
+            NSPredicate(format: "label CONTAINS 'deep sea'")).firstMatch.waitForExistence(timeout: 4),
+            "matching tile should remain")
+        XCTAssertFalse(results.matching(
+            NSPredicate(format: "label CONTAINS 'Jeju'")).firstMatch.exists,
+            "non-matching tile should be filtered out")
+
+        let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        shot.name = "search-results"
+        shot.lifetime = .keepAlways
+        add(shot)
+    }
+}

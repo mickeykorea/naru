@@ -4,6 +4,7 @@ struct ContentView: View {
     @StateObject private var store = ArchiveStore()
     @State private var selectedTab: String? = nil
     @State private var showSaveSheet = false
+    @State private var showSearch = false
     @State private var selectedItem: SavedItem? = nil
     @State private var toast: String? = nil
     @State private var saveButtonHidden = false
@@ -112,6 +113,7 @@ struct ContentView: View {
         }
         .overlay(alignment: .top) { statusBarFrost }
         .overlay(alignment: .topLeading) { moreButton }
+        .overlay(alignment: .topTrailing) { searchButton }
         #if DEBUG
         .overlay {
             if ProcessInfo.processInfo.arguments.contains("-naru-demo-type") {
@@ -122,6 +124,9 @@ struct ContentView: View {
         .background(backgroundWash)
         .sheet(isPresented: $showSaveSheet) {
             SaveSheet(existingCategories: store.categories, onSave: save)
+        }
+        .sheet(isPresented: $showSearch) {
+            SearchSheet(items: store.items) { id, note in store.setNote(note, for: id) }
         }
         .sheet(item: $selectedItem) { item in
             ItemDetailSheet(item: item) { store.setNote($0, for: item.id) }
@@ -202,6 +207,22 @@ struct ContentView: View {
         .glassEffect(.regular.interactive(), in: Circle())
         .padding(.leading, 20)
         .padding(.top, 8)
+    }
+
+    private var searchButton: some View {
+        Button {
+            showSearch = true
+        } label: {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(.primary)
+                .frame(width: 44, height: 44)
+        }
+        .tint(.primary)
+        .glassEffect(.regular.interactive(), in: Circle())
+        .padding(.trailing, 20)
+        .padding(.top, 8)
+        .accessibilityIdentifier("search-button")
     }
 
     private var tabs: some View {
