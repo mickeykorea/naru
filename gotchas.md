@@ -35,3 +35,13 @@ Inter (BeReal's font) was rejected same-day: use the system font, always.
 Copying a reference's design system means its hierarchy and structure, not
 its literal font file or logotype tics ("Naru." period = AI slop). Weight
 system, uppercase labels, and no-underline tabs survived.
+
+## 2026-07-08 — Frost "randomly" breaking = UIKit clobbering layer.filters
+Every frost regression report (builds 2-10) had one root cause: UIKit
+rebuilds UIVisualEffectView internals on scene re-activation and wipes
+custom layer.filters -> uniform blur with a hard bottom edge. Applying the
+filter once in init is never enough; re-assert in layoutSubviews /
+didMoveToWindow / didBecomeActive (identity-check makes it free).
+Reproduce BEFORE theorizing: background + re-foreground the app twice in
+the simulator. The earlier "device GPU flips the mask" theory was this
+bug wearing a costume.
