@@ -31,7 +31,7 @@ struct SaveSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {
             Text("Save to Naru")
-                .font(.inter(20, .bold))
+                .font(.system(size: 20, weight: .bold))
                 .padding(.top, 24)
 
             TextField("Paste a link…", text: $draft)
@@ -42,7 +42,7 @@ struct SaveSheet: View {
                 .submitLabel(.next)
                 .onSubmit { startFetch() }
                 .onChange(of: draft) { startFetchDebounced() }
-                .font(.inter(15))
+                .font(.system(size: 15))
                 .padding(14)
                 .background(Color(.systemGray6), in: RoundedRectangle(cornerRadius: 14))
 
@@ -52,7 +52,7 @@ struct SaveSheet: View {
 
             VStack(alignment: .leading, spacing: 12) {
                 Text("CATEGORY")
-                    .font(.inter(12, .medium))
+                    .font(.system(size: 12, weight: .medium))
                     .tracking(0.6)
                     .foregroundStyle(Color(.systemGray))
                 categoryPicker
@@ -60,7 +60,7 @@ struct SaveSheet: View {
 
             Button(action: submit) {
                 Text("Save")
-                    .font(.inter(17, .semibold))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(Color(.systemBackground))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 15)
@@ -104,10 +104,10 @@ struct SaveSheet: View {
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(fetching ? "Fetching…" : (preview?.title ?? domainOf(draft)))
-                    .font(.inter(15, .medium))
+                    .font(.system(size: 15, weight: .medium))
                     .lineLimit(2)
                 Text(domainOf(draft))
-                    .font(.inter(13))
+                    .font(.system(size: 13))
                     .foregroundStyle(Color(.systemGray))
             }
             Spacer()
@@ -125,7 +125,7 @@ struct SaveSheet: View {
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
                 .background(Color(.systemGray6), in: Capsule())
-                .font(.inter(15))
+                .font(.system(size: 15))
         }
     }
 

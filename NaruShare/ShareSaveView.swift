@@ -33,7 +33,7 @@ struct ShareSaveView: View {
         VStack(alignment: .leading, spacing: 22) {
             HStack {
                 Text("Save to Naru")
-                    .font(.inter(20, .bold))
+                    .font(.system(size: 20, weight: .bold))
                 Spacer()
                 Button(action: cancel) {
                     Image(systemName: "xmark")
@@ -49,9 +49,9 @@ struct ShareSaveView: View {
             if noLink {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Nothing to save here.")
-                        .font(.inter(15, .medium))
+                        .font(.system(size: 15, weight: .medium))
                     Text("Naru saves links — share a page or post with a URL.")
-                        .font(.inter(13))
+                        .font(.system(size: 13))
                         .foregroundStyle(Color(.systemGray))
                 }
             } else {
@@ -59,7 +59,7 @@ struct ShareSaveView: View {
 
                 VStack(alignment: .leading, spacing: 12) {
                     Text("CATEGORY")
-                        .font(.inter(12, .medium))
+                        .font(.system(size: 12, weight: .medium))
                         .tracking(0.6)
                         .foregroundStyle(Color(.systemGray))
                     FlowChips(choices: categoryChoices, selected: $selectedCategory)
@@ -70,12 +70,12 @@ struct ShareSaveView: View {
                         .padding(.horizontal, 14)
                         .padding(.vertical, 10)
                         .background(Color(.systemGray6), in: Capsule())
-                        .font(.inter(15))
+                        .font(.system(size: 15))
                 }
 
                 Button(action: submit) {
                     Text("Save")
-                        .font(.inter(17, .semibold))
+                        .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(Color(.systemBackground))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 15)
@@ -119,10 +119,10 @@ struct ShareSaveView: View {
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(fetching ? "Fetching…" : (preview?.title ?? domain))
-                    .font(.inter(15, .medium))
+                    .font(.system(size: 15, weight: .medium))
                     .lineLimit(2)
                 Text(domain)
-                    .font(.inter(13))
+                    .font(.system(size: 13))
                     .foregroundStyle(Color(.systemGray))
             }
             Spacer()

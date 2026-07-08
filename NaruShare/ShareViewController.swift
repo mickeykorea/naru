@@ -5,7 +5,6 @@ final class ShareViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        Typeface.register()
         view.backgroundColor = .systemBackground
 
         let host = UIHostingController(rootView: ShareSaveView(

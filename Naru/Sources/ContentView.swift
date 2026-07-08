@@ -117,10 +117,10 @@ struct ContentView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text("Naru.")
-                .font(.inter(24, .heavy))
+            Text("Naru")
+                .font(.system(size: 24, weight: .heavy))
             Text("\(store.items.count) saved")
-                .font(.inter(13))
+                .font(.system(size: 13))
                 .foregroundStyle(Color(.systemGray))
                 .contentTransition(.numericText())
                 .animation(.easeOut(duration: 0.3), value: store.items.count)
@@ -148,8 +148,8 @@ struct ContentView: View {
             selectedTab = value
         } label: {
             HStack(spacing: 5) {
-                Text(label).font(.inter(15, selectedTab == value ? .semibold : .regular))
-                Text("\(count)").font(.inter(11)).foregroundStyle(Color(.systemGray))
+                Text(label).font(.system(size: 15, weight: selectedTab == value ? .semibold : .regular))
+                Text("\(count)").font(.system(size: 11)).foregroundStyle(Color(.systemGray))
             }
             .foregroundStyle(selectedTab == value ? .primary : Color(.systemGray))
             .fixedSize()
@@ -183,9 +183,9 @@ struct ContentView: View {
     private var emptyState: some View {
         VStack(spacing: 8) {
             Text("Nothing saved yet.")
-                .font(.inter(20, .semibold))
+                .font(.system(size: 20, weight: .semibold))
             Text("Share anything to Naru from any app,\nor paste a link below.")
-                .font(.inter(15))
+                .font(.system(size: 15))
                 .foregroundStyle(Color(.systemGray))
                 .multilineTextAlignment(.center)
         }
@@ -208,7 +208,7 @@ struct ContentView: View {
                 Image(systemName: "plus")
                 Text("Save a link")
             }
-            .font(.inter(17, .semibold))
+            .font(.system(size: 17, weight: .semibold))
             .foregroundStyle(Color(.systemBackground))
             .padding(.horizontal, 28)
             .padding(.vertical, 15)
@@ -221,7 +221,7 @@ struct ContentView: View {
 
     private func toastView(_ message: String) -> some View {
         Text(message)
-            .font(.inter(13, .medium))
+            .font(.system(size: 13, weight: .medium))
             .foregroundStyle(Color(.systemBackground))
             .padding(.horizontal, 18)
             .padding(.vertical, 10)

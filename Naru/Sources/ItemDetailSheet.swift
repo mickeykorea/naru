@@ -25,7 +25,7 @@ struct ItemDetailSheet: View {
                     .padding(.top, 34)
 
                 Text(item.title)
-                    .font(.inter(20, .bold))
+                    .font(.system(size: 20, weight: .bold))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 28)
                     .padding(.top, 24)
@@ -33,7 +33,7 @@ struct ItemDetailSheet: View {
                 HStack(spacing: 5) {
                     SourceIcon(domain: item.domain)
                     Text("\(item.domain) · saved \(item.savedAt.formatted(.relative(presentation: .named)))")
-                        .font(.inter(13))
+                        .font(.system(size: 13))
                         .foregroundStyle(Color(.systemGray))
                 }
                 .padding(.top, 8)
@@ -46,7 +46,7 @@ struct ItemDetailSheet: View {
                             .font(.system(size: 15, weight: .semibold))
                         Text("Open Link")
                     }
-                    .font(.inter(15, .semibold))
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(Color(.systemBackground))
                     .padding(.horizontal, 24)
                     .padding(.vertical, 13)
@@ -58,11 +58,11 @@ struct ItemDetailSheet: View {
                 if let summary = item.summary, !summary.isEmpty {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("SUMMARY")
-                            .font(.inter(12, .medium))
+                            .font(.system(size: 12, weight: .medium))
                             .tracking(0.6)
                             .foregroundStyle(Color(.systemGray))
                         Text(summary)
-                            .font(.inter(15))
+                            .font(.system(size: 15))
                             .foregroundStyle(.secondary)
                             .lineSpacing(5)
                     }
@@ -111,7 +111,7 @@ struct ItemDetailSheet: View {
                 .aspectRatio(1.6, contentMode: .fit)
                 .overlay(
                     Text(item.title)
-                        .font(.inter(20, .medium))
+                        .font(.system(size: 20, weight: .medium))
                         .multilineTextAlignment(.center)
                         .padding(28)
                 )

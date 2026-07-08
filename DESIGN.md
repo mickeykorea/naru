@@ -23,13 +23,11 @@ No textures, no gradients, no themed palettes.
 - Emphasis: solid black fill, white text (pill buttons). Black IS the accent.
 - No accent hue anywhere in chrome. Semantic red only for destructive.
 
-## Typography (BeReal system, in white)
-- Everything: Inter, bundled (Naru/Resources/Fonts, SIL OFL) and registered
-  at runtime via Typeface.register() in both app and extension. Use
-  `.font(.inter(size, weight))` — never `.system` for text (SF Symbols keep
-  `.system` sizing next to Inter labels).
+## Typography (BeReal weight system, SF Pro, in white)
+- Everything: SF Pro (`.system(size:weight:)`) — NO custom/bundled fonts
+  (Inter was tried 2026-07-08 and rejected same day; system font only).
 - Weight does the hierarchy work; sizes stay small and tight:
-  - Wordmark: "Naru." (with period, BeReal-style) — 24 ExtraBold (.heavy)
+  - Wordmark: "Naru" — 24 heavy. NO trailing period (rejected as AI slop).
   - Sheet/detail headlines: 20 bold · Empty-state title: 20 semibold
   - Buttons/pills: 17 semibold · Open Link: 15 semibold
   - Tile title: 15 semibold · Body/chips/fields: 15 regular-medium
@@ -94,4 +92,5 @@ transform pattern; never ship a raw 24×24 Simple Icons file.
 | Date | Decision | Rationale |
 |------|----------|-----------|
 | 2026-07-08 | System derived from Genie/Cosmos/ChatGPT refs | Mickey rejected 3 generated directions; references are the spec |
-| 2026-07-08 | BeReal design system adopted in white: Inter everywhere, "Naru." wordmark, weight-based tabs, serif retired | Mickey: "We're copying their design system basically but in white" |
+| 2026-07-08 | BeReal design system adopted in white: weight-based tabs, uppercase labels, serif retired | Mickey: "We're copying their design system basically but in white" |
+| 2026-07-08 | Inter reverted to SF Pro; wordmark period removed | Mickey: system font only; "no fucking dot after the title" |

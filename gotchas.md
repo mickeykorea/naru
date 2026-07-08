@@ -29,3 +29,9 @@ identical frost code was fine; the flip broke it. Rules:
 - Device-affecting rendering changes (esp. private API paths the simulator
   can't reproduce) only ship against a confirmed-good device baseline; if
   the baseline is good, revert to it exactly rather than iterating theory.
+
+## 2026-07-08 — Type: SF Pro only, no wordmark punctuation
+Inter (BeReal's font) was rejected same-day: use the system font, always.
+Copying a reference's design system means its hierarchy and structure, not
+its literal font file or logotype tics ("Naru." period = AI slop). Weight
+system, uppercase labels, and no-underline tabs survived.
