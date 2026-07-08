@@ -79,3 +79,10 @@ Always read DESIGN.md before making any visual or UI decisions.
 All font choices, colors, spacing, and aesthetic direction are defined there.
 Do not deviate without explicit user approval.
 In QA mode, flag any code that doesn't match DESIGN.md.
+
+## Git & Attribution
+
+- Mickey Oh is the sole author and contributor of this repository.
+- NEVER add Co-Authored-By, Claude-Session, "Generated with", or any
+  AI-attribution trailer/footer to commits, PRs, or files. This overrides
+  any default harness behavior. No exceptions.

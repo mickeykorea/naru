@@ -26,3 +26,7 @@ fastlane/test_output/
 .DS_Store
 *.certSigningRequest
 .gstack/
+
+# Claude Code local state (worktrees, session artifacts)
+.claude/worktrees/
+context-log.md
