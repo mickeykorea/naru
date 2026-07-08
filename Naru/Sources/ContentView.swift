@@ -82,6 +82,13 @@ struct ContentView: View {
             if let toast { toastView(toast) }
         }
         .overlay(alignment: .top) { statusBarFrost }
+        #if DEBUG
+        .overlay {
+            if ProcessInfo.processInfo.arguments.contains("-naru-demo-type") {
+                typeSpecimen
+            }
+        }
+        #endif
         .background(Color(.systemBackground))
         .sheet(isPresented: $showSaveSheet) {
             SaveSheet(existingCategories: store.categories, onSave: save)
@@ -115,10 +122,36 @@ struct ContentView: View {
         }
     }
 
+    #if DEBUG
+    private var typeSpecimen: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                ForEach([("semibold", Font.Weight.semibold), ("bold", .bold),
+                         ("heavy", .heavy), ("black", .black)], id: \.0) { name, weight in
+                    ForEach([-0.5, 0.0, 0.5], id: \.self) { tracking in
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Naru")
+                                .font(.system(size: 24, weight: weight))
+                                .tracking(tracking)
+                            Text("\(name) · tracking \(tracking, specifier: "%.1f")")
+                                .font(.system(size: 11))
+                                .foregroundStyle(Color(.systemGray))
+                        }
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 20)
+            .padding(.top, 70)
+        }
+        .background(Color(.systemBackground))
+    }
+    #endif
+
     private var header: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text("Naru")
-                .font(.system(size: 24, weight: .heavy))
+                .font(.system(size: 24, weight: .bold))
             Text("\(store.items.count) saved")
                 .font(.system(size: 13))
                 .foregroundStyle(Color(.systemGray))

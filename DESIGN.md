@@ -26,8 +26,15 @@ No textures, no gradients, no themed palettes.
 ## Typography (BeReal weight system, SF Pro, in white)
 - Everything: SF Pro (`.system(size:weight:)`) — NO custom/bundled fonts
   (Inter was tried 2026-07-08 and rejected same day; system font only).
+- Accent voice: EB Garamond (bundled Naru/Resources/Fonts, OFL, static
+  instances cut from the Google variable font, runtime-registered via
+  Typeface.register()). Used ONLY for content-voice moments: text-only
+  tile titles (18 medium), detail-sheet gray hero fallback (23 medium),
+  summary body (17 regular, lineSpacing 5). Garamond runs small — size up
+  ~2pt vs the SF equivalent. `.font(.garamond(size, weight))`.
 - Weight does the hierarchy work; sizes stay small and tight:
-  - Wordmark: "Naru" — 24 heavy. NO trailing period (rejected as AI slop).
+  - Wordmark: "Naru" — 24 BOLD (heavy/black go blobby in SF Pro at this
+    size — verified via specimen 2026-07-08). NO trailing period.
   - Sheet/detail headlines: 20 bold · Empty-state title: 20 semibold
   - Buttons/pills: 17 semibold · Open Link: 15 semibold
   - Tile title: 15 semibold · Body/chips/fields: 15 regular-medium
@@ -83,6 +90,17 @@ canvas (round 20 · default 19.4 · dense square 18.6 · solid rect 18.8 ·
 wide width-capped 22.5) — when adding an icon, wrap its path in the same
 transform pattern; never ship a raw 24×24 Simple Icons file.
 
+## App icon
+- White ground (#FFF), black organic vessel: two billowed sails (bezier
+  triangles — curves deviate ~5-8% from straight; 20% reads blobby) over a
+  slim ferry hull with upturned ends. Derived from Figma node 8-6 of
+  HWBUKiKo4IJ1WH3ewia3mm but organic, and inverted to white.
+- Geometry at 1024: all three inter-shape gaps uniform ~56px; the
+  composition's rendered bounding box must center at (512, 512) — verify
+  by measuring pixels (numpy bbox), not by eyeballing path coords.
+- Regenerate: `swift scripts/render-app-icon.swift <out.png>` → copy to
+  Naru/Resources/Assets.xcassets/AppIcon.appiconset/icon-1024.png.
+
 ## Anti-rules (learned, do not revisit)
 - No dark-navy + teal theme. No warm-paper/museum/heritage styling.
 - No decorative texture, no colored category chips, no card borders.
@@ -94,3 +112,6 @@ transform pattern; never ship a raw 24×24 Simple Icons file.
 | 2026-07-08 | System derived from Genie/Cosmos/ChatGPT refs | Mickey rejected 3 generated directions; references are the spec |
 | 2026-07-08 | BeReal design system adopted in white: weight-based tabs, uppercase labels, serif retired | Mickey: "We're copying their design system basically but in white" |
 | 2026-07-08 | Inter reverted to SF Pro; wordmark period removed | Mickey: system font only; "no fucking dot after the title" |
+| 2026-07-08 | Wordmark weight heavy→bold | heavy/black blobby in SF Pro; picked from 12-variant specimen |
+| 2026-07-08 | EB Garamond as accent font: text tiles + summary body | Mickey requested a "point font" for no-image previews and summaries |
+| 2026-07-08 | App icon: black organic vessel on white, uniform gaps, pixel-centered | Iterated 5 rounds from Figma 8-6; white bg + narrow uniform gaps per Mickey |

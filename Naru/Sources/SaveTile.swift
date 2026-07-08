@@ -39,7 +39,7 @@ struct SaveTile: View {
                 .aspectRatio(1, contentMode: .fit)
                 .overlay(
                     Text(item.title)
-                        .font(.system(size: 15, weight: .medium))
+                        .font(.garamond(18, .medium))
                         .lineLimit(5)
                         .multilineTextAlignment(.leading)
                         .padding(16)

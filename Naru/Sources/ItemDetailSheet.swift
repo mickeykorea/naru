@@ -62,7 +62,7 @@ struct ItemDetailSheet: View {
                             .tracking(0.6)
                             .foregroundStyle(Color(.systemGray))
                         Text(summary)
-                            .font(.system(size: 15))
+                            .font(.garamond(17))
                             .foregroundStyle(.secondary)
                             .lineSpacing(5)
                     }
@@ -111,7 +111,7 @@ struct ItemDetailSheet: View {
                 .aspectRatio(1.6, contentMode: .fit)
                 .overlay(
                     Text(item.title)
-                        .font(.system(size: 20, weight: .medium))
+                        .font(.garamond(23, .medium))
                         .multilineTextAlignment(.center)
                         .padding(28)
                 )
