@@ -23,10 +23,8 @@ struct ContentView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
                         header
-                        if !store.items.isEmpty { tabs }
-                        if store.items.isEmpty {
-                            emptyState
-                        } else {
+                        if !store.items.isEmpty {
+                            tabs
                             grid
                         }
                     }
@@ -80,6 +78,7 @@ struct ContentView: View {
                     #endif
                 }
             }
+            if store.items.isEmpty { emptyState }
             saveButton
             if let toast { toastView(toast) }
         }
@@ -197,14 +196,15 @@ struct ContentView: View {
     }
 
     private var emptyState: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(spacing: 8) {
             Text("Nothing saved yet.")
                 .font(.title3.weight(.semibold))
             Text("Share anything to Naru from any app,\nor paste a link below.")
                 .font(.subheadline)
                 .foregroundStyle(Color(.systemGray))
+                .multilineTextAlignment(.center)
         }
-        .padding(.top, 60)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // scrollEdgeEffectStyle only frosts system bars; Naru has no nav bar,
