@@ -45,3 +45,9 @@ didMoveToWindow / didBecomeActive (identity-check makes it free).
 Reproduce BEFORE theorizing: background + re-foreground the app twice in
 the simulator. The earlier "device GPU flips the mask" theory was this
 bug wearing a costume.
+
+## 2026-07-08 — Scaffold defaults are design decisions waiting to leak
+The AccentColor asset kept its scaffold-era teal for 13 builds, invisible
+until a Menu label tinted with it. When adopting a design system, sweep
+asset-catalog colors too, not just code. Also: new source files need
+`xcodegen generate` before they exist to xcodebuild.

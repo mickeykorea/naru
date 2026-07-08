@@ -4,7 +4,8 @@ Source of truth. Derived from Mickey's references, not generated taste.
 Match the references; do not invent directions.
 
 ## References (canonical)
-- BeReal iOS — https://mobbin.com/apps/be-real-ios-9315d60d-7c8c-4b1d-98eb-e696e0ef3859 — THE design-system reference since 2026-07-08, adopted "in white": Inter typography with weight-driven hierarchy, wordmark with period, no-underline weight/color tabs, uppercase tracked section labels, chunky rounded surfaces
+- BeReal iOS — https://mobbin.com/apps/be-real-ios-9315d60d-7c8c-4b1d-98eb-e696e0ef3859 — THE design-system reference since 2026-07-08, adopted "in white": weight-driven hierarchy, no-underline weight/color tabs, uppercase tracked section labels, chunky rounded surfaces
+- iOS 26 Clock app (world clock) — the top-chrome reference since build 15: no screen title, floating circular Liquid Glass icon buttons (more top-left, search top-right), content starts directly with navigation
 - Cosmos iOS — https://mobbin.com/apps/cosmos-ios-8bfdb726-e2c2-4305-8185-7e915a61d351 (collection tiles = Naru's blueprint: rounded 2-col grid, metadata line, floating capsule nav)
 - Genie iOS — https://mobbin.com/apps/genie-ios-ca2f73fe-0974-4841-8cd8-ffe7217ac82c (white ground, black pills)
 - ChatGPT iOS — https://mobbin.com/apps/chat-gpt-ios-a96b7f4c-6bfa-4c9d-a6b7-562160feb391 (monochrome restraint, gray chips, content-first hierarchy)
@@ -33,8 +34,9 @@ No textures, no gradients, no themed palettes.
   summary body (17 regular, lineSpacing 5). Garamond runs small — size up
   ~2pt vs the SF equivalent. `.font(.garamond(size, weight))`.
 - Weight does the hierarchy work; sizes stay small and tight:
-  - Wordmark: "Naru" — 24 BOLD (heavy/black go blobby in SF Pro at this
-    size — verified via specimen 2026-07-08). NO trailing period.
+  - Wordmark: retired from the home screen (build 15, Clock-style chrome).
+    If "Naru" ever appears as type again: 24 BOLD (heavy/black go blobby
+    in SF Pro — specimen-verified), NO trailing period.
   - Sheet/detail headlines: 20 bold · Empty-state title: 20 semibold
   - Buttons/pills: 17 semibold · Open Link: 15 semibold
   - Tile title: 15 semibold · Body/chips/fields: 15 regular-medium
@@ -43,6 +45,17 @@ No textures, no gradients, no themed palettes.
   - Tab counts: 11 regular
 - No serif anywhere — retired with the BeReal adoption (2026-07-08).
 - Counts keep `.contentTransition(.numericText())` (NumberFlow feel).
+
+## Top chrome (Clock-style, build 15+)
+- No title. Two floating 44pt circular Liquid Glass buttons pinned above
+  the scroll (they do not scroll away): ellipsis top-left (menu — contents
+  TBD), magnifyingglass top-right (search sheet). 20pt side margins, 8pt
+  below safe area. `.tint(.primary)` on glass buttons — Menu labels
+  otherwise pick up the accent asset.
+- Background: near-white vertical wash, white at top → Color(white: 0.955)
+  at bottom; dark mode inverts (0.09 → black). Never a flat fill.
+- Spacing: content starts 76pt from safe-area top (clears buttons + air);
+  category tabs get 28pt below before the grid.
 
 ## Layout
 - Save tiles: 2-column grid, corner radius 22, aspect ~1:1 for visual saves;
@@ -115,3 +128,5 @@ transform pattern; never ship a raw 24×24 Simple Icons file.
 | 2026-07-08 | Wordmark weight heavy→bold | heavy/black blobby in SF Pro; picked from 12-variant specimen |
 | 2026-07-08 | EB Garamond as accent font: text tiles + summary body | Mickey requested a "point font" for no-image previews and summaries |
 | 2026-07-08 | App icon: black organic vessel on white, uniform gaps, pixel-centered | Iterated 5 rounds from Figma 8-6; white bg + narrow uniform gaps per Mickey |
+| 2026-07-08 | Clock-style chrome: title dropped, glass icon buttons, gradient wash | Mickey supplied iOS 26 Clock screenshot as the reference |
+| 2026-07-08 | Right glass button = search (title/domain/category/summary/note) | Only credible candidate for an archive; cmdk-style sheet |
