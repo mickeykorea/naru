@@ -8,6 +8,7 @@ struct SavedItem: Identifiable, Codable, Equatable {
     let savedAt: Date
     var hasThumbnail: Bool
     var summary: String?
+    var note: String? = nil
 
     var domain: String {
         guard let host = URL(string: url.hasPrefix("http") ? url : "https://" + url)?.host else {
@@ -64,6 +65,12 @@ final class ArchiveStore: ObservableObject {
 
     func add(_ item: SavedItem) {
         items.insert(item, at: 0)
+        persist()
+    }
+
+    func setNote(_ note: String, for id: UUID) {
+        guard let index = items.firstIndex(where: { $0.id == id }) else { return }
+        items[index].note = note.isEmpty ? nil : note
         persist()
     }
 

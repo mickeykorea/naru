@@ -122,7 +122,7 @@ struct ContentView: View {
             SaveSheet(existingCategories: store.categories, onSave: save)
         }
         .sheet(item: $selectedItem) { item in
-            ItemDetailSheet(item: item)
+            ItemDetailSheet(item: item) { store.setNote($0, for: item.id) }
         }
         .onAppear {
             #if DEBUG

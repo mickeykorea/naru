@@ -75,6 +75,10 @@ final class CategoryPagingTests: XCTestCase {
 
         scroll.swipeLeft()
         sleep(1)
+        let diag = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        diag.name = "after-swipe-left"
+        diag.lifetime = .keepAlways
+        add(diag)
         XCTAssertFalse(spotifyMeta.exists, "Reads should not contain the spotify item")
 
         scroll.swipeRight()
@@ -85,5 +89,67 @@ final class CategoryPagingTests: XCTestCase {
         scroll.swipeRight()
         sleep(1)
         XCTAssertTrue(spotifyMeta.exists)
+    }
+}
+
+final class NoteTests: XCTestCase {
+
+    func testNotePersistsAcrossSheetOpens() throws {
+        let app = XCUIApplication(bundleIdentifier: "com.mickeyoh.naru")
+        app.launch()
+
+        let tile = app.staticTexts["Apple"].firstMatch
+        XCTAssertTrue(tile.waitForExistence(timeout: 10))
+        tile.tap()
+
+        // the note field is the sheet's only text field; don't match on the
+        // placeholder — it disappears once a note exists
+        let field = app.textFields.firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: 8), "note field missing in detail sheet")
+        field.tap()
+        app.typeText("zebra note 42")
+
+        // full relaunch: stronger persistence guarantee than sheet
+        // round-tripping, and it avoids XCUITest sheet-dismissal flakiness
+        sleep(1)
+        app.terminate()
+        app.launch()
+        XCTAssertTrue(tile.waitForExistence(timeout: 10))
+        tile.tap()
+
+        let saved = app.textFields.matching(
+            NSPredicate(format: "value CONTAINS 'zebra note 42'")).firstMatch
+        XCTAssertTrue(saved.waitForExistence(timeout: 8), "note did not persist")
+    }
+}
+
+
+final class HeroCollapseTests: XCTestCase {
+
+    func testHeroShrinksWithScrollAndFloors() throws {
+        let app = XCUIApplication(bundleIdentifier: "com.mickeyoh.naru")
+        app.launchArguments = ["-naru-demo-detail", "-naru-demo-large"]
+        app.launch()
+
+        let hero = app.descendants(matching: .any)
+            .matching(identifier: "detail-hero").firstMatch
+        XCTAssertTrue(hero.waitForExistence(timeout: 10), "hero missing")
+        let full = hero.frame.height
+        XCTAssertGreaterThan(full, 200, "hero should start near full height")
+
+        app.swipeUp(velocity: .slow)
+        sleep(1)
+        let collapsed = hero.frame.height
+        let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        shot.name = "hero-collapsed"
+        shot.lifetime = .keepAlways
+        add(shot)
+        XCTAssertLessThan(collapsed, full - 40, "hero should shrink with scroll")
+
+        // keep scrolling: hero must pin at the floor, never vanish
+        app.swipeUp()
+        sleep(1)
+        let floored = hero.frame.height
+        XCTAssertGreaterThanOrEqual(floored, 118, "hero must not collapse past the floor")
     }
 }
