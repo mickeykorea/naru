@@ -51,3 +51,27 @@ The AccentColor asset kept its scaffold-era teal for 13 builds, invisible
 until a Menu label tinted with it. When adopting a design system, sweep
 asset-catalog colors too, not just code. Also: new source files need
 `xcodegen generate` before they exist to xcodebuild.
+
+## 2026-07-09 — iOS 26 sheets are translucent glass at .medium
+The default sheet background at the .medium detent is Liquid Glass, not
+systemBackground. Any opaque element pinned inside (the detail hero's
+shield) creates a visible two-tone seam. Pin the sheet with
+`.presentationBackground(Color(.systemBackground))` whenever sheet content
+carries its own opaque backgrounds.
+
+## 2026-07-09 — Horizontal swipes don't cancel SwiftUI buttons
+Vertical scrolling cancels a tile Button's press; a horizontal
+simultaneousGesture drag does not — finger-up at the end of a category
+swipe also fired the tile tap and opened the detail sheet. Veto pattern:
+set a flag in the drag's onChanged when horizontal-dominant, guard the
+button action on it, lift it ~0.15s after onEnded (the touch-up races
+the gesture end).
+
+## 2026-07-09 — Seeding sim app-group defaults: container path only
+`simctl spawn <UD> defaults write group.com.mickeyoh.naru ...` writes to
+the user-domain prefs, NOT the shared container — reads back fine, app
+sees nothing. Write to the real plist instead:
+`simctl spawn <UD> defaults write <GroupContainer>/Library/Preferences/group.com.mickeyoh.naru <key> -data <hex>`
+where GroupContainer comes from `simctl get_app_container <UD> com.mickeyoh.naru groups`.
+UI tests assume seeded fixtures (a spotify item, an "Apple" tile) — reseed
+them on any fresh simulator before running NaruUITests.

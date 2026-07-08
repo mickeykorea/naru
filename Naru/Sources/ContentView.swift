@@ -11,6 +11,9 @@ struct ContentView: View {
     @State private var lastScrollOffset: CGFloat = 0
     @State private var scrollRun: CGFloat = 0
     @State private var pushEdge: Edge = .trailing
+    // a horizontal page-swipe never scrolls, so it doesn't cancel tile
+    // buttons the way vertical scrolling does — veto their taps instead
+    @State private var suppressTileTaps = false
     @Environment(\.scenePhase) private var scenePhase
 
     private var shown: [SavedItem] {
@@ -89,7 +92,17 @@ struct ContentView: View {
                 // vertical scrolling keeps priority (simultaneous, high bar)
                 .simultaneousGesture(
                     DragGesture(minimumDistance: 25)
+                        .onChanged { value in
+                            if abs(value.translation.width) > abs(value.translation.height) {
+                                suppressTileTaps = true
+                            }
+                        }
                         .onEnded { value in
+                            // the tile's touch-up lands around the same
+                            // moment as this — lift the veto a beat later
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                                suppressTileTaps = false
+                            }
                             let dx = value.translation.width
                             let dy = value.translation.height
                             guard abs(dx) > 60, abs(dx) > abs(dy) * 1.5 else { return }
@@ -135,6 +148,9 @@ struct ContentView: View {
             #if DEBUG
             if ProcessInfo.processInfo.arguments.contains("-naru-demo-detail") {
                 selectedItem = store.items.first
+            }
+            if ProcessInfo.processInfo.arguments.contains("-naru-demo-toast") {
+                toast = "Saved to Reading"
             }
             if ProcessInfo.processInfo.arguments.contains("-naru-demo-share") {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
@@ -257,7 +273,10 @@ struct ContentView: View {
         LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)],
                   alignment: .leading, spacing: 24) {
             ForEach(shown) { item in
-                Button { selectedItem = item } label: {
+                Button {
+                    guard !suppressTileTaps else { return }
+                    selectedItem = item
+                } label: {
                     SaveTile(item: item)
                 }
                 .buttonStyle(PressableStyle())
@@ -301,6 +320,14 @@ struct ContentView: View {
             .allowsHitTesting(false)
     }
 
+    // theme-matched glass: blends with the wash instead of contrasting —
+    // near-white translucent in light mode, dark grey in dark mode
+    private var savePillTint: Color {
+        colorScheme == .dark
+            ? Color(white: 0.16).opacity(0.9)
+            : Color.white.opacity(0.45)
+    }
+
     private var saveButton: some View {
         Button { showSaveSheet = true } label: {
             HStack(spacing: 8) {
@@ -308,11 +335,11 @@ struct ContentView: View {
                 Text("Save a link")
             }
             .font(.system(size: 17, weight: .semibold))
-            .foregroundStyle(Color(.systemBackground))
+            .foregroundStyle(.primary)
             .padding(.horizontal, 28)
             .padding(.vertical, 15)
         }
-        .glassEffect(.regular.tint(.primary.opacity(0.92)).interactive())
+        .glassEffect(.regular.tint(savePillTint).interactive())
         .padding(.bottom, 24)
         .offset(y: saveButtonHidden ? 130 : 0)
         .animation(.snappy(duration: 0.3, extraBounce: 0), value: saveButtonHidden)
@@ -321,10 +348,10 @@ struct ContentView: View {
     private func toastView(_ message: String) -> some View {
         Text(message)
             .font(.system(size: 13, weight: .medium))
-            .foregroundStyle(Color(.systemBackground))
+            .foregroundStyle(.primary)
             .padding(.horizontal, 18)
             .padding(.vertical, 10)
-            .glassEffect(.regular.tint(.primary.opacity(0.92)))
+            .glassEffect(.regular.tint(savePillTint))
             .padding(.bottom, 92)
             .transition(.move(edge: .bottom).combined(with: .opacity))
     }

@@ -64,6 +64,9 @@ struct ItemDetailSheet: View {
         .presentationDetents([.medium, .large], selection: $detent)
         .presentationDragIndicator(.hidden)
         .presentationCornerRadius(28)
+        // the default sheet background is translucent glass at .medium,
+        // which reads as a different color than the hero's opaque shield
+        .presentationBackground(Color(.systemBackground))
         // custom grabber, lower than the system's 5pt (matches the Genie
         // reference; the 28pt corner radius needs the extra air)
         .overlay(alignment: .top) {

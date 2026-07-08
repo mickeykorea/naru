@@ -80,8 +80,15 @@ No textures, no gradients, no themed palettes.
 
 ## Materials (Liquid Glass)
 - Floating chrome over scrolling content uses Liquid Glass: the Save pill
-  (`glassEffect(.regular.tint(.primary.opacity(0.92)).interactive())`) and
-  the toast. In-sheet buttons stay solid black per the Genie reference.
+  and the toast share a theme-matched tint (`savePillTint`): near-white
+  translucent in light mode (white @ 0.45), dark grey in dark mode
+  (white 0.16 @ 0.9), text `.primary` — the pill blends with the wash
+  instead of contrasting. In-sheet buttons stay solid black per the Genie
+  reference.
+- Sheets with an opaque element pinned inside (detail hero shield) need
+  `.presentationBackground(Color(.systemBackground))` — iOS 26's default
+  sheet background is translucent glass at the .medium detent and reads
+  as a second background color against the shield.
 - Status-bar frost: Naru has no nav bar, so `scrollEdgeEffectStyle` won't
   render. Use `VariableBlurView` (Sources/VariableBlur.swift) — a true
   progressive blur (radius 9, 82pt band, quadratic ease-out mask so the
@@ -130,3 +137,5 @@ transform pattern; never ship a raw 24×24 Simple Icons file.
 | 2026-07-08 | App icon: black organic vessel on white, uniform gaps, pixel-centered | Iterated 5 rounds from Figma 8-6; white bg + narrow uniform gaps per Mickey |
 | 2026-07-08 | Clock-style chrome: title dropped, glass icon buttons, gradient wash | Mickey supplied iOS 26 Clock screenshot as the reference |
 | 2026-07-08 | Right glass button = search (title/domain/category/summary/note) | Only credible candidate for an archive; cmdk-style sheet |
+| 2026-07-09 | Save pill + toast theme-matched: near-white glass in light, dark grey in dark, primary text | Mickey: "bold move", match the theme instead of contrast |
+| 2026-07-09 | Detail sheet pinned to opaque systemBackground | Default glass sheet background split colors against the hero shield at .medium |
