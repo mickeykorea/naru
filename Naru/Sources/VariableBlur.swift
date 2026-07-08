@@ -69,7 +69,13 @@ final class VariableBlurUIView: UIVisualEffectView {
         let renderer = UIGraphicsImageRenderer(size: CGSize(width: 1, height: CGFloat(height)))
         let image = renderer.image { ctx in
             for y in 0..<height {
-                let t = CGFloat(y) / CGFloat(height - 1)
+                var t = CGFloat(y) / CGFloat(height - 1)
+                // the device GPU samples the mask bottom-up while the
+                // simulator samples top-down; without this the full-radius
+                // end of the ramp lands on the header instead of the edge
+                #if !targetEnvironment(simulator)
+                t = 1 - t
+                #endif
                 let eased = (1 - t) * (1 - t)
                 ctx.cgContext.setFillColor(UIColor.black.withAlphaComponent(eased).cgColor)
                 ctx.cgContext.fill(CGRect(x: 0, y: CGFloat(y), width: 1, height: 1))
