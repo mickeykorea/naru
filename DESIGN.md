@@ -4,8 +4,9 @@ Source of truth. Derived from Mickey's references, not generated taste.
 Match the references; do not invent directions.
 
 ## References (canonical)
-- Genie iOS — https://mobbin.com/apps/genie-ios-ca2f73fe-0974-4841-8cd8-ffe7217ac82c (serif wordmark accent, white ground, black pills, orbiting-avatar micro-motion)
-- Cosmos iOS — https://mobbin.com/apps/cosmos-ios-8bfdb726-e2c2-4305-8185-7e915a61d351 (collection tiles = Naru's blueprint: rounded 2-col grid, "N elements · Private" metadata, floating capsule nav, underline tabs)
+- BeReal iOS — https://mobbin.com/apps/be-real-ios-9315d60d-7c8c-4b1d-98eb-e696e0ef3859 — THE design-system reference since 2026-07-08, adopted "in white": Inter typography with weight-driven hierarchy, wordmark with period, no-underline weight/color tabs, uppercase tracked section labels, chunky rounded surfaces
+- Cosmos iOS — https://mobbin.com/apps/cosmos-ios-8bfdb726-e2c2-4305-8185-7e915a61d351 (collection tiles = Naru's blueprint: rounded 2-col grid, metadata line, floating capsule nav)
+- Genie iOS — https://mobbin.com/apps/genie-ios-ca2f73fe-0974-4841-8cd8-ffe7217ac82c (white ground, black pills)
 - ChatGPT iOS — https://mobbin.com/apps/chat-gpt-ios-a96b7f4c-6bfa-4c9d-a6b7-562160feb391 (monochrome restraint, gray chips, content-first hierarchy)
 - Interaction taste (web libs, treat as motion/interaction spec): NumberFlow (animated numbers), Sonner (toasts), cmdk (command menus), dnd kit (drag), Virtuoso (smooth virtualized lists), input-otp, Liveline, Leva.
 
@@ -22,19 +23,28 @@ No textures, no gradients, no themed palettes.
 - Emphasis: solid black fill, white text (pill buttons). Black IS the accent.
 - No accent hue anywhere in chrome. Semantic red only for destructive.
 
-## Typography
-- Everything: SF Pro (system), rely on Dynamic Type styles
-  - Screen title: title2 semibold · Tile name: subheadline semibold
-  - Metadata: footnote regular, systemGray · Buttons: body semibold
-- Single exception: the 나루/Naru wordmark uses New York serif
-  (`.fontDesign(.serif)`), like Genie's serif logo accent. Nothing else.
-- Counts use monospacedDigit + `.contentTransition(.numericText())` (NumberFlow feel).
+## Typography (BeReal system, in white)
+- Everything: Inter, bundled (Naru/Resources/Fonts, SIL OFL) and registered
+  at runtime via Typeface.register() in both app and extension. Use
+  `.font(.inter(size, weight))` — never `.system` for text (SF Symbols keep
+  `.system` sizing next to Inter labels).
+- Weight does the hierarchy work; sizes stay small and tight:
+  - Wordmark: "Naru." (with period, BeReal-style) — 24 ExtraBold (.heavy)
+  - Sheet/detail headlines: 20 bold · Empty-state title: 20 semibold
+  - Buttons/pills: 17 semibold · Open Link: 15 semibold
+  - Tile title: 15 semibold · Body/chips/fields: 15 regular-medium
+  - Metadata: 13 regular systemGray · Toast: 13 medium
+  - Section labels: 12 medium UPPERCASE, tracking 0.6 ("CATEGORY", "SUMMARY")
+  - Tab counts: 11 regular
+- No serif anywhere — retired with the BeReal adoption (2026-07-08).
+- Counts keep `.contentTransition(.numericText())` (NumberFlow feel).
 
 ## Layout
 - Save tiles: 2-column grid, corner radius 22, aspect ~1:1 for visual saves;
   text saves get gray surface tile with serif quote/title inside
 - Below each tile: name (1 line, semibold) + metadata line "domain · 2h" in gray
-- Category navigation: horizontal underline tabs with count (Cosmos style)
+- Category navigation: horizontal text tabs with count — no underline;
+  active = black semibold, inactive = systemGray regular (BeReal style)
 - Primary actions float: capsule bar/button at bottom (Cosmos floating nav)
 - Margins 20pt, gutter 12pt, section spacing 28pt
 - Sheets: white, corner radius 24-28 top, list rows, big black Done pill
@@ -84,3 +94,4 @@ transform pattern; never ship a raw 24×24 Simple Icons file.
 | Date | Decision | Rationale |
 |------|----------|-----------|
 | 2026-07-08 | System derived from Genie/Cosmos/ChatGPT refs | Mickey rejected 3 generated directions; references are the spec |
+| 2026-07-08 | BeReal design system adopted in white: Inter everywhere, "Naru." wordmark, weight-based tabs, serif retired | Mickey: "We're copying their design system basically but in white" |

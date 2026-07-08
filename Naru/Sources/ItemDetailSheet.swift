@@ -25,8 +25,7 @@ struct ItemDetailSheet: View {
                     .padding(.top, 34)
 
                 Text(item.title)
-                    .font(.title3.weight(.semibold))
-                    .fontDesign(.serif)
+                    .font(.inter(20, .bold))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 28)
                     .padding(.top, 24)
@@ -34,7 +33,7 @@ struct ItemDetailSheet: View {
                 HStack(spacing: 5) {
                     SourceIcon(domain: item.domain)
                     Text("\(item.domain) · saved \(item.savedAt.formatted(.relative(presentation: .named)))")
-                        .font(.footnote)
+                        .font(.inter(13))
                         .foregroundStyle(Color(.systemGray))
                 }
                 .padding(.top, 8)
@@ -44,10 +43,10 @@ struct ItemDetailSheet: View {
                 } label: {
                     HStack(spacing: 7) {
                         Image(systemName: "arrow.up.right")
-                            .font(.subheadline.weight(.semibold))
+                            .font(.system(size: 15, weight: .semibold))
                         Text("Open Link")
                     }
-                    .font(.subheadline.weight(.semibold))
+                    .font(.inter(15, .semibold))
                     .foregroundStyle(Color(.systemBackground))
                     .padding(.horizontal, 24)
                     .padding(.vertical, 13)
@@ -58,13 +57,14 @@ struct ItemDetailSheet: View {
 
                 if let summary = item.summary, !summary.isEmpty {
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("Summary")
-                            .font(.subheadline.weight(.semibold))
+                        Text("SUMMARY")
+                            .font(.inter(12, .medium))
+                            .tracking(0.6)
+                            .foregroundStyle(Color(.systemGray))
                         Text(summary)
-                            .font(.callout)
-                            .fontDesign(.serif)
+                            .font(.inter(15))
                             .foregroundStyle(.secondary)
-                            .lineSpacing(4)
+                            .lineSpacing(5)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 24)
@@ -111,8 +111,7 @@ struct ItemDetailSheet: View {
                 .aspectRatio(1.6, contentMode: .fit)
                 .overlay(
                     Text(item.title)
-                        .font(.title3.weight(.medium))
-                        .fontDesign(.serif)
+                        .font(.inter(20, .medium))
                         .multilineTextAlignment(.center)
                         .padding(28)
                 )

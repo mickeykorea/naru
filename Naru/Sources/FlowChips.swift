@@ -12,7 +12,7 @@ struct FlowChips: View {
                         selected = selected == choice ? nil : choice
                     } label: {
                         Text(choice)
-                            .font(.subheadline.weight(.medium))
+                            .font(.inter(15, .medium))
                             .foregroundStyle(selected == choice ? Color(.systemBackground) : .primary)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 9)

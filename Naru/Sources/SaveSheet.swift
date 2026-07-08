@@ -31,7 +31,7 @@ struct SaveSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {
             Text("Save to Naru")
-                .font(.title3.weight(.semibold))
+                .font(.inter(20, .bold))
                 .padding(.top, 24)
 
             TextField("Paste a link…", text: $draft)
@@ -42,6 +42,7 @@ struct SaveSheet: View {
                 .submitLabel(.next)
                 .onSubmit { startFetch() }
                 .onChange(of: draft) { startFetchDebounced() }
+                .font(.inter(15))
                 .padding(14)
                 .background(Color(.systemGray6), in: RoundedRectangle(cornerRadius: 14))
 
@@ -50,15 +51,16 @@ struct SaveSheet: View {
             }
 
             VStack(alignment: .leading, spacing: 12) {
-                Text("Category")
-                    .font(.footnote.weight(.medium))
+                Text("CATEGORY")
+                    .font(.inter(12, .medium))
+                    .tracking(0.6)
                     .foregroundStyle(Color(.systemGray))
                 categoryPicker
             }
 
             Button(action: submit) {
                 Text("Save")
-                    .font(.body.weight(.semibold))
+                    .font(.inter(17, .semibold))
                     .foregroundStyle(Color(.systemBackground))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 15)
@@ -102,10 +104,10 @@ struct SaveSheet: View {
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(fetching ? "Fetching…" : (preview?.title ?? domainOf(draft)))
-                    .font(.subheadline.weight(.medium))
+                    .font(.inter(15, .medium))
                     .lineLimit(2)
                 Text(domainOf(draft))
-                    .font(.footnote)
+                    .font(.inter(13))
                     .foregroundStyle(Color(.systemGray))
             }
             Spacer()
@@ -123,7 +125,7 @@ struct SaveSheet: View {
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
                 .background(Color(.systemGray6), in: Capsule())
-                .font(.subheadline)
+                .font(.inter(15))
         }
     }
 

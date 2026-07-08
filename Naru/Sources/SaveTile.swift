@@ -8,12 +8,12 @@ struct SaveTile: View {
             tile
             VStack(alignment: .leading, spacing: 3) {
                 Text(item.title)
-                    .font(.subheadline.weight(.semibold))
+                    .font(.inter(15, .semibold))
                     .lineLimit(1)
                 HStack(spacing: 5) {
                     SourceIcon(domain: item.domain)
                     Text("\(item.domain) · \(item.savedAt.formatted(.relative(presentation: .named)))")
-                        .font(.footnote)
+                        .font(.inter(13))
                         .foregroundStyle(Color(.systemGray))
                         .lineLimit(1)
                 }
@@ -39,8 +39,7 @@ struct SaveTile: View {
                 .aspectRatio(1, contentMode: .fit)
                 .overlay(
                     Text(item.title)
-                        .font(.subheadline.weight(.medium))
-                        .fontDesign(.serif)
+                        .font(.inter(15, .medium))
                         .lineLimit(5)
                         .multilineTextAlignment(.leading)
                         .padding(16)

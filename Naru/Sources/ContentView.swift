@@ -10,7 +10,6 @@ struct ContentView: View {
     @State private var lastScrollOffset: CGFloat = 0
     @State private var scrollRun: CGFloat = 0
     @Environment(\.scenePhase) private var scenePhase
-    @Namespace private var tabIndicator
 
     private var shown: [SavedItem] {
         guard let tab = selectedTab else { return store.items }
@@ -118,12 +117,10 @@ struct ContentView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text("Naru")
-                .font(.title2.weight(.semibold))
-                .fontDesign(.serif)
+            Text("Naru.")
+                .font(.inter(24, .heavy))
             Text("\(store.items.count) saved")
-                .font(.footnote)
-                .monospacedDigit()
+                .font(.inter(13))
                 .foregroundStyle(Color(.systemGray))
                 .contentTransition(.numericText())
                 .animation(.easeOut(duration: 0.3), value: store.items.count)
@@ -140,33 +137,21 @@ struct ContentView: View {
                     tabItem(cat, label: cat, count: store.items.filter { $0.category == cat }.count)
                 }
             }
-            // the indicator slide is the only animated part of a tab switch;
-            // grid content swaps instantly (filtering is replacement, not movement)
             .animation(.snappy(duration: 0.25, extraBounce: 0), value: selectedTab)
         }
         .padding(.bottom, 18)
     }
 
+    // BeReal tabs: no underline — selection is weight + color
     private func tabItem(_ value: String?, label: String, count: Int) -> some View {
         Button {
             selectedTab = value
         } label: {
-            VStack(spacing: 6) {
-                HStack(spacing: 5) {
-                    Text(label).font(.subheadline.weight(selectedTab == value ? .semibold : .regular))
-                    Text("\(count)").font(.caption2).foregroundStyle(Color(.systemGray))
-                }
-                .foregroundStyle(selectedTab == value ? .primary : Color(.systemGray))
-                ZStack {
-                    Rectangle().fill(.clear).frame(height: 2)
-                    if selectedTab == value {
-                        Rectangle()
-                            .fill(Color.primary)
-                            .frame(height: 2)
-                            .matchedGeometryEffect(id: "tabline", in: tabIndicator)
-                    }
-                }
+            HStack(spacing: 5) {
+                Text(label).font(.inter(15, selectedTab == value ? .semibold : .regular))
+                Text("\(count)").font(.inter(11)).foregroundStyle(Color(.systemGray))
             }
+            .foregroundStyle(selectedTab == value ? .primary : Color(.systemGray))
             .fixedSize()
         }
         .buttonStyle(.plain)
@@ -198,9 +183,9 @@ struct ContentView: View {
     private var emptyState: some View {
         VStack(spacing: 8) {
             Text("Nothing saved yet.")
-                .font(.title3.weight(.semibold))
+                .font(.inter(20, .semibold))
             Text("Share anything to Naru from any app,\nor paste a link below.")
-                .font(.subheadline)
+                .font(.inter(15))
                 .foregroundStyle(Color(.systemGray))
                 .multilineTextAlignment(.center)
         }
@@ -223,7 +208,7 @@ struct ContentView: View {
                 Image(systemName: "plus")
                 Text("Save a link")
             }
-            .font(.body.weight(.semibold))
+            .font(.inter(17, .semibold))
             .foregroundStyle(Color(.systemBackground))
             .padding(.horizontal, 28)
             .padding(.vertical, 15)
@@ -236,7 +221,7 @@ struct ContentView: View {
 
     private func toastView(_ message: String) -> some View {
         Text(message)
-            .font(.footnote.weight(.medium))
+            .font(.inter(13, .medium))
             .foregroundStyle(Color(.systemBackground))
             .padding(.horizontal, 18)
             .padding(.vertical, 10)

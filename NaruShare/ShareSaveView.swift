@@ -33,11 +33,11 @@ struct ShareSaveView: View {
         VStack(alignment: .leading, spacing: 22) {
             HStack {
                 Text("Save to Naru")
-                    .font(.title3.weight(.semibold))
+                    .font(.inter(20, .bold))
                 Spacer()
                 Button(action: cancel) {
                     Image(systemName: "xmark")
-                        .font(.footnote.weight(.semibold))
+                        .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(Color(.systemGray))
                         .frame(width: 30, height: 30)
                         .background(Color(.systemGray6), in: Circle())
@@ -49,17 +49,18 @@ struct ShareSaveView: View {
             if noLink {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Nothing to save here.")
-                        .font(.subheadline.weight(.medium))
+                        .font(.inter(15, .medium))
                     Text("Naru saves links — share a page or post with a URL.")
-                        .font(.footnote)
+                        .font(.inter(13))
                         .foregroundStyle(Color(.systemGray))
                 }
             } else {
                 previewRow
 
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("Category")
-                        .font(.footnote.weight(.medium))
+                    Text("CATEGORY")
+                        .font(.inter(12, .medium))
+                        .tracking(0.6)
                         .foregroundStyle(Color(.systemGray))
                     FlowChips(choices: categoryChoices, selected: $selectedCategory)
                         .onChange(of: selectedCategory) { if selectedCategory != nil { newCategory = "" } }
@@ -69,12 +70,12 @@ struct ShareSaveView: View {
                         .padding(.horizontal, 14)
                         .padding(.vertical, 10)
                         .background(Color(.systemGray6), in: Capsule())
-                        .font(.subheadline)
+                        .font(.inter(15))
                 }
 
                 Button(action: submit) {
                     Text("Save")
-                        .font(.body.weight(.semibold))
+                        .font(.inter(17, .semibold))
                         .foregroundStyle(Color(.systemBackground))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 15)
@@ -118,10 +119,10 @@ struct ShareSaveView: View {
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(fetching ? "Fetching…" : (preview?.title ?? domain))
-                    .font(.subheadline.weight(.medium))
+                    .font(.inter(15, .medium))
                     .lineLimit(2)
                 Text(domain)
-                    .font(.footnote)
+                    .font(.inter(13))
                     .foregroundStyle(Color(.systemGray))
             }
             Spacer()

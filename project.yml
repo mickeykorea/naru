@@ -50,6 +50,8 @@ targets:
       - path: Naru/Sources/Models.swift
       - path: Naru/Sources/LinkMetadata.swift
       - path: Naru/Sources/FlowChips.swift
+      - path: Naru/Sources/Typeface.swift
+      - path: Naru/Resources/Fonts
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.mickeyoh.naru.share
