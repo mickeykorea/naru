@@ -48,8 +48,8 @@ struct ContentView: View {
                     // centered by the ScrollView and reads as a left indent
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 20)
-                    // clear the floating glass button row
-                    .padding(.top, 64)
+                    // clear the floating glass button row, with air below it
+                    .padding(.top, 76)
                     .padding(.bottom, 120)
                 }
                 .scrollEdgeEffectStyle(.soft, for: .top)
@@ -235,7 +235,7 @@ struct ContentView: View {
             }
             .animation(.snappy(duration: 0.25, extraBounce: 0), value: selectedTab)
         }
-        .padding(.bottom, 18)
+        .padding(.bottom, 28)
     }
 
     // BeReal tabs: no underline — selection is weight + color
