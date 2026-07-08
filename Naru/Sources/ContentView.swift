@@ -30,6 +30,9 @@ struct ContentView: View {
                             grid
                         }
                     }
+                    // without this, an empty archive's narrow content gets
+                    // centered by the ScrollView and reads as a left indent
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 20)
                     .padding(.bottom, 120)
                 }
