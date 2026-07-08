@@ -52,20 +52,20 @@ final class VariableBlurUIView: UIVisualEffectView {
         backdrop.layer.setValue(window.screen.scale, forKey: "scale")
     }
 
-    // vertical alpha ramp: opaque (full blur) at top -> clear at bottom
+    // vertical alpha ramp: opaque (full blur) at top -> clear at bottom.
+    // A linear ramp leaves residual radius at the band's bottom edge, which
+    // renders as a visible seam where the frame ends; ease the decay so the
+    // radius genuinely hits zero before the edge and the blur just dissolves.
     private static func gradientMask() -> CGImage? {
-        let size = CGSize(width: 1, height: 64)
-        let renderer = UIGraphicsImageRenderer(size: size)
+        let height = 128
+        let renderer = UIGraphicsImageRenderer(size: CGSize(width: 1, height: CGFloat(height)))
         let image = renderer.image { ctx in
-            let colors = [UIColor.black.cgColor, UIColor.clear.cgColor]
-            guard let gradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(),
-                                            colors: colors as CFArray,
-                                            locations: [0, 1]) else { return }
-            ctx.cgContext.drawLinearGradient(
-                gradient,
-                start: .zero,
-                end: CGPoint(x: 0, y: size.height),
-                options: [])
+            for y in 0..<height {
+                let t = CGFloat(y) / CGFloat(height - 1)
+                let eased = (1 - t) * (1 - t)
+                ctx.cgContext.setFillColor(UIColor.black.withAlphaComponent(eased).cgColor)
+                ctx.cgContext.fill(CGRect(x: 0, y: CGFloat(y), width: 1, height: 1))
+            }
         }
         return image.cgImage
     }
