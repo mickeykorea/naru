@@ -18,3 +18,14 @@
   gallery-like, artifacts on display. Propose distinct directions, not polish.
 - 2026-07-08 — Product: MVP scope is share-sheet capture + auto-categorization
   only. No manual paste-a-link inbox as the core interaction.
+
+## 2026-07-08 — Never ship device-rendering theories unverified
+Shipped a "device GPU samples the blur mask bottom-up" flip (build 6) based
+on a broken-frost report — but the report came from an older build still on
+the phone (screenshots predated the fixed build going live). Build 5 with
+identical frost code was fine; the flip broke it. Rules:
+- Before changing code from a TestFlight report, confirm WHICH build number
+  the phone is actually running (TestFlight shows it under the app name).
+- Device-affecting rendering changes (esp. private API paths the simulator
+  can't reproduce) only ship against a confirmed-good device baseline; if
+  the baseline is good, revert to it exactly rather than iterating theory.
