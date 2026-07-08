@@ -146,8 +146,10 @@ struct ContentView: View {
         .onChange(of: scenePhase) {
             if scenePhase == .active {
                 withAnimation(.easeOut(duration: 0.3)) { store.reload() }
+                Task { await store.upgradeSummaries() }
             }
         }
+        .task { await store.upgradeSummaries() }
     }
 
     #if DEBUG

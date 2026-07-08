@@ -9,6 +9,9 @@ struct SavedItem: Identifiable, Codable, Equatable {
     var hasThumbnail: Bool
     var summary: String?
     var note: String? = nil
+    // false = still carrying the publisher og:description; the app
+    // upgrades these through Summarizer when it gets the chance
+    var summaryUpgraded: Bool? = nil
 
     var domain: String {
         guard let host = URL(string: url.hasPrefix("http") ? url : "https://" + url)?.host else {
@@ -68,6 +71,10 @@ final class ArchiveStore: ObservableObject {
         persist()
     }
 
+    // used by the app-only summary sweep (ArchiveStore+Summaries.swift);
+    // lives here because extensions cannot add stored properties
+    var upgradingSummaries = false
+
     func setNote(_ note: String, for id: UUID) {
         guard let index = items.firstIndex(where: { $0.id == id }) else { return }
         items[index].note = note.isEmpty ? nil : note
@@ -84,6 +91,11 @@ final class ArchiveStore: ObservableObject {
         var seen = [String]()
         for item in items where !seen.contains(item.category) { seen.append(item.category) }
         return seen
+    }
+
+    func mutate(_ change: (inout [SavedItem]) -> Void) {
+        change(&items)
+        persist()
     }
 
     private func persist() {
