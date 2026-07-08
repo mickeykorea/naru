@@ -56,8 +56,10 @@ No textures, no gradients, no themed palettes.
   the toast. In-sheet buttons stay solid black per the Genie reference.
 - Status-bar frost: Naru has no nav bar, so `scrollEdgeEffectStyle` won't
   render. Use `VariableBlurView` (Sources/VariableBlur.swift) — a true
-  progressive blur (radius 9, 82pt band): content stays saturated and
-  defocuses toward the edge, iMessage-style. NOT a masked material — that
+  progressive blur (radius 9, 82pt band, quadratic ease-out mask so the
+  radius reaches true zero before the band edge — a linear ramp leaves a
+  visible seam): content stays saturated and defocuses toward the edge,
+  iMessage-style. NOT a masked material — that
   adds a milky veil (rejected). Note: taps CAFilter("variableBlur")
   (private API, industry-common); fallback if ever rejected is the
   gradient-masked ultraThinMaterial.
