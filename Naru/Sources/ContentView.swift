@@ -9,11 +9,28 @@ struct ContentView: View {
     @State private var saveButtonHidden = false
     @State private var lastScrollOffset: CGFloat = 0
     @State private var scrollRun: CGFloat = 0
+    @State private var pushEdge: Edge = .trailing
     @Environment(\.scenePhase) private var scenePhase
 
     private var shown: [SavedItem] {
         guard let tab = selectedTab else { return store.items }
         return store.items.filter { $0.category == tab }
+    }
+
+    private var tabOrder: [String?] {
+        [nil] + store.categories.map { Optional($0) }
+    }
+
+    private func swipeToAdjacentCategory(_ dx: CGFloat) {
+        guard !store.items.isEmpty,
+              let index = tabOrder.firstIndex(of: selectedTab) else { return }
+        let next = dx < 0 ? index + 1 : index - 1
+        guard tabOrder.indices.contains(next) else { return }
+        pushEdge = dx < 0 ? .trailing : .leading
+        UISelectionFeedbackGenerator().selectionChanged()
+        withAnimation(.snappy(duration: 0.3, extraBounce: 0)) {
+            selectedTab = tabOrder[next]
+        }
     }
 
     var body: some View {
@@ -66,6 +83,17 @@ struct ContentView: View {
                         saveButtonHidden = false
                     }
                 }
+                // horizontal-dominant swipes page between categories;
+                // vertical scrolling keeps priority (simultaneous, high bar)
+                .simultaneousGesture(
+                    DragGesture(minimumDistance: 25)
+                        .onEnded { value in
+                            let dx = value.translation.width
+                            let dy = value.translation.height
+                            guard abs(dx) > 60, abs(dx) > abs(dy) * 1.5 else { return }
+                            swipeToAdjacentCategory(dx)
+                        }
+                )
                 .onAppear {
                     #if DEBUG
                     if ProcessInfo.processInfo.arguments.contains("-naru-demo-scroll"),
@@ -210,7 +238,10 @@ struct ContentView: View {
         // new identity per tab: kills cross-tab move-diffing, so switching
         // categories swaps content instantly instead of sliding cards around.
         // Save/remove still animate via withAnimation at their call sites.
+        // Tab taps stay instant (no withAnimation); swipes animate this
+        // transition as a directional push.
         .id(selectedTab)
+        .transition(.push(from: pushEdge))
     }
 
     private var emptyState: some View {

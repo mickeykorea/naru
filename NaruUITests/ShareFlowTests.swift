@@ -58,3 +58,32 @@ final class ShareFlowTests: XCTestCase {
         add(appShot)
     }
 }
+
+final class CategoryPagingTests: XCTestCase {
+
+    func testSwipePagesBetweenCategories() throws {
+        let app = XCUIApplication(bundleIdentifier: "com.mickeyoh.naru")
+        app.launch()
+
+        let scroll = app.scrollViews.firstMatch
+        XCTAssertTrue(scroll.waitForExistence(timeout: 10))
+
+        // "All" shows the spotify item; first swipe left lands on Reads
+        let spotifyMeta = app.staticTexts.matching(
+            NSPredicate(format: "label CONTAINS 'spotify'")).firstMatch
+        XCTAssertTrue(spotifyMeta.waitForExistence(timeout: 5), "expected All tab content")
+
+        scroll.swipeLeft()
+        sleep(1)
+        XCTAssertFalse(spotifyMeta.exists, "Reads should not contain the spotify item")
+
+        scroll.swipeRight()
+        sleep(1)
+        XCTAssertTrue(spotifyMeta.waitForExistence(timeout: 5), "swipe right should return to All")
+
+        // leftmost boundary: another right swipe must not crash or change anything
+        scroll.swipeRight()
+        sleep(1)
+        XCTAssertTrue(spotifyMeta.exists)
+    }
+}
