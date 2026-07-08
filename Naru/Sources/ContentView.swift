@@ -9,6 +9,7 @@ struct ContentView: View {
     @State private var saveButtonHidden = false
     @State private var lastScrollOffset: CGFloat = 0
     @State private var scrollRun: CGFloat = 0
+    @Environment(\.scenePhase) private var scenePhase
     @Namespace private var tabIndicator
 
     private var shown: [SavedItem] {
@@ -92,7 +93,24 @@ struct ContentView: View {
             if ProcessInfo.processInfo.arguments.contains("-naru-demo-detail") {
                 selectedItem = store.items.first
             }
+            if ProcessInfo.processInfo.arguments.contains("-naru-demo-share") {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                    let activity = UIActivityViewController(
+                        activityItems: [URL(string: "https://www.apple.com")!],
+                        applicationActivities: nil)
+                    UIApplication.shared.connectedScenes
+                        .compactMap { ($0 as? UIWindowScene)?.keyWindow }
+                        .first?.rootViewController?
+                        .present(activity, animated: true)
+                }
+            }
             #endif
+        }
+        // pick up items saved through the share extension while away
+        .onChange(of: scenePhase) {
+            if scenePhase == .active {
+                withAnimation(.easeOut(duration: 0.3)) { store.reload() }
+            }
         }
     }
 

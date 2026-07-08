@@ -17,14 +17,30 @@ struct SavedItem: Identifiable, Codable, Equatable {
     }
 }
 
+// Storage lives in the app group so the share extension and the app see
+// the same archive. Falls back to per-app storage if the group container
+// is unavailable (missing entitlement — should not happen in practice).
+enum SharedStorage {
+    static let appGroup = "group.com.mickeyoh.naru"
+
+    static var defaults: UserDefaults {
+        UserDefaults(suiteName: appGroup) ?? .standard
+    }
+
+    static var containerURL: URL {
+        FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroup)
+            ?? FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+    }
+}
+
 @MainActor
 final class ArchiveStore: ObservableObject {
     @Published private(set) var items: [SavedItem] = []
 
-    private let key = "naru.archive.v2"
+    private static let key = "naru.archive.v2"
 
     static var thumbnailDirectory: URL {
-        let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let dir = SharedStorage.containerURL
             .appendingPathComponent("thumbnails", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir
@@ -35,9 +51,14 @@ final class ArchiveStore: ObservableObject {
     }
 
     init() {
-        if let data = UserDefaults.standard.data(forKey: key),
+        migrateFromStandardDefaultsIfNeeded()
+        reload()
+    }
+
+    func reload() {
+        if let data = SharedStorage.defaults.data(forKey: Self.key),
            let saved = try? JSONDecoder().decode([SavedItem].self, from: data) {
-            items = saved
+            if saved != items { items = saved }
         }
     }
 
@@ -60,7 +81,27 @@ final class ArchiveStore: ObservableObject {
 
     private func persist() {
         if let data = try? JSONEncoder().encode(items) {
-            UserDefaults.standard.set(data, forKey: key)
+            SharedStorage.defaults.set(data, forKey: Self.key)
+        }
+    }
+
+    // Builds 1-2 stored the archive in standard defaults and thumbnails in
+    // Documents; carry those saves into the shared container once.
+    private func migrateFromStandardDefaultsIfNeeded() {
+        guard SharedStorage.defaults != UserDefaults.standard,
+              SharedStorage.defaults.data(forKey: Self.key) == nil,
+              let legacy = UserDefaults.standard.data(forKey: Self.key) else { return }
+        SharedStorage.defaults.set(legacy, forKey: Self.key)
+
+        let oldDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("thumbnails", isDirectory: true)
+        let newDir = Self.thumbnailDirectory
+        if let files = try? FileManager.default.contentsOfDirectory(at: oldDir, includingPropertiesForKeys: nil) {
+            for file in files {
+                try? FileManager.default.moveItem(
+                    at: file,
+                    to: newDir.appendingPathComponent(file.lastPathComponent))
+            }
         }
     }
 }
