@@ -38,7 +38,6 @@ struct ContentView: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
-                        header
                         if !store.items.isEmpty {
                             tabs
                             grid
@@ -48,6 +47,8 @@ struct ContentView: View {
                     // centered by the ScrollView and reads as a left indent
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 20)
+                    // clear the floating glass button row
+                    .padding(.top, 64)
                     .padding(.bottom, 120)
                 }
                 .scrollEdgeEffectStyle(.soft, for: .top)
@@ -110,6 +111,7 @@ struct ContentView: View {
             if let toast { toastView(toast) }
         }
         .overlay(alignment: .top) { statusBarFrost }
+        .overlay(alignment: .topLeading) { moreButton }
         #if DEBUG
         .overlay {
             if ProcessInfo.processInfo.arguments.contains("-naru-demo-type") {
@@ -117,7 +119,7 @@ struct ContentView: View {
             }
         }
         #endif
-        .background(Color(.systemBackground))
+        .background(backgroundWash)
         .sheet(isPresented: $showSaveSheet) {
             SaveSheet(existingCategories: store.categories, onSave: save)
         }
@@ -178,18 +180,28 @@ struct ContentView: View {
     }
     #endif
 
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text("Naru")
-                .font(.system(size: 24, weight: .bold))
-            Text("\(store.items.count) saved")
-                .font(.system(size: 13))
-                .foregroundStyle(Color(.systemGray))
-                .contentTransition(.numericText())
-                .animation(.easeOut(duration: 0.3), value: store.items.count)
+    // near-white wash, breathing slightly brighter at the top (Clock ref)
+    @Environment(\.colorScheme) private var colorScheme
+    private var backgroundWash: LinearGradient {
+        let colors = colorScheme == .dark
+            ? [Color(white: 0.09), Color(white: 0)]
+            : [Color(white: 1.0), Color(white: 0.955)]
+        return LinearGradient(colors: colors, startPoint: .top, endPoint: .bottom)
+    }
+
+    private var moreButton: some View {
+        Menu {
+            Button("Nothing here yet", action: {}).disabled(true)
+        } label: {
+            Image(systemName: "ellipsis")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(.primary)
+                .frame(width: 44, height: 44)
         }
-        .padding(.top, 12)
-        .padding(.bottom, 20)
+        .tint(.primary)
+        .glassEffect(.regular.interactive(), in: Circle())
+        .padding(.leading, 20)
+        .padding(.top, 8)
     }
 
     private var tabs: some View {
