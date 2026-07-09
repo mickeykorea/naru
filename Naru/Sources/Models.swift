@@ -81,6 +81,14 @@ final class ArchiveStore: ObservableObject {
         persist()
     }
 
+    func setCategory(_ category: String, for id: UUID) {
+        let trimmed = category.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty,
+              let index = items.firstIndex(where: { $0.id == id }) else { return }
+        items[index].category = trimmed
+        persist()
+    }
+
     func remove(_ item: SavedItem) {
         items.removeAll { $0.id == item.id }
         try? FileManager.default.removeItem(at: Self.thumbnailURL(for: item.id))

@@ -41,7 +41,8 @@ No textures, no gradients, no themed palettes.
   - Buttons/pills: 17 semibold · Open Link: 15 semibold
   - Tile title: 15 semibold · Body/chips/fields: 15 regular-medium
   - Metadata: 13 regular systemGray · Toast: 13 medium
-  - Section labels: 12 medium UPPERCASE, tracking 0.6 ("CATEGORY", "SUMMARY")
+  - Section labels: 12 medium, Title Case, tracking 0.6 ("Category",
+    "Summary", "Note", "Appearance") — NOT all-caps (looked shouty; 2026-07-09)
   - Tab counts: 11 regular
 - No serif anywhere — retired with the BeReal adoption (2026-07-08).
 - Counts keep `.contentTransition(.numericText())` (NumberFlow feel).
@@ -139,3 +140,8 @@ transform pattern; never ship a raw 24×24 Simple Icons file.
 | 2026-07-08 | Right glass button = search (title/domain/category/summary/note) | Only credible candidate for an archive; cmdk-style sheet |
 | 2026-07-09 | Save pill + toast theme-matched: near-white glass in light, dark grey in dark, primary text | Mickey: "bold move", match the theme instead of contrast |
 | 2026-07-09 | Detail sheet pinned to opaque systemBackground | Default glass sheet background split colors against the hero shield at .medium |
+| 2026-07-09 | Section labels Title Case, not all-caps | Mickey: uppercase reads as AI/shouty; "Note", "Summary", "Category", "Appearance" |
+| 2026-07-09 | Settings: full-height bottom sheet, Appearance override + About + attribution | Mickey supplied Hands Time reference; picked Appearance-only content |
+| 2026-07-09 | Settings icons in softly domed circular chips (subtle gradient) | Mickey wanted the reference's "little 3D" — a sanctioned exception to the no-gradient rule, chrome only |
+| 2026-07-09 | Settings card pinned to tile color (systemGray6 literal); sheet bg darker | Cards must match the grid tiles; sheet "elevated" appearance was drifting the color and collapsing dark-mode contrast |
+| 2026-07-09 | Change category: long-press "Move to" + detail-sheet Category pill | Mickey: both — quick grid move (existing only) and detail editor (view/switch/new) |

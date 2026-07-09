@@ -5,6 +5,8 @@ struct ContentView: View {
     @State private var selectedTab: String? = nil
     @State private var showSaveSheet = false
     @State private var showSearch = false
+    @State private var showSettings = false
+    @AppStorage(Appearance.storageKey) private var appearanceRaw = Appearance.system.rawValue
     @State private var selectedItem: SavedItem? = nil
     @State private var toast: String? = nil
     @State private var saveButtonHidden = false
@@ -139,10 +141,18 @@ struct ContentView: View {
             SaveSheet(existingCategories: store.categories, onSave: save)
         }
         .sheet(isPresented: $showSearch) {
-            SearchSheet(items: store.items) { id, note in store.setNote(note, for: id) }
+            SearchSheet(items: store.items,
+                        onNoteChange: { store.setNote($1, for: $0) },
+                        onCategoryChange: { store.setCategory($1, for: $0) })
+        }
+        .sheet(isPresented: $showSettings) {
+            SettingsSheet()
         }
         .sheet(item: $selectedItem) { item in
-            ItemDetailSheet(item: item) { store.setNote($0, for: item.id) }
+            ItemDetailSheet(item: item,
+                            categories: store.categories,
+                            onNoteChange: { store.setNote($0, for: item.id) },
+                            onCategoryChange: { store.setCategory($0, for: item.id) })
         }
         .onAppear {
             #if DEBUG
@@ -151,6 +161,9 @@ struct ContentView: View {
             }
             if ProcessInfo.processInfo.arguments.contains("-naru-demo-toast") {
                 toast = "Saved to Reading"
+            }
+            if ProcessInfo.processInfo.arguments.contains("-naru-demo-settings") {
+                showSettings = true
             }
             if ProcessInfo.processInfo.arguments.contains("-naru-demo-share") {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
@@ -173,6 +186,7 @@ struct ContentView: View {
             }
         }
         .task { await store.upgradeSummaries() }
+        .preferredColorScheme((Appearance(rawValue: appearanceRaw) ?? .system).colorScheme)
     }
 
     #if DEBUG
@@ -212,7 +226,11 @@ struct ContentView: View {
 
     private var moreButton: some View {
         Menu {
-            Button("Nothing here yet", action: {}).disabled(true)
+            Button {
+                showSettings = true
+            } label: {
+                Label("Settings", systemImage: "gearshape")
+            }
         } label: {
             Image(systemName: "ellipsis")
                 .font(.system(size: 15, weight: .semibold))
@@ -223,6 +241,7 @@ struct ContentView: View {
         .glassEffect(.regular.interactive(), in: Circle())
         .padding(.leading, 20)
         .padding(.top, 8)
+        .accessibilityIdentifier("more-button")
     }
 
     private var searchButton: some View {
@@ -283,6 +302,18 @@ struct ContentView: View {
                 .id(item.id)
                 .transition(.opacity.combined(with: .scale(scale: 0.97)))
                 .contextMenu {
+                    let others = store.categories.filter { $0 != item.category }
+                    if !others.isEmpty {
+                        Menu {
+                            ForEach(others, id: \.self) { cat in
+                                Button(cat) {
+                                    withAnimation(.easeOut(duration: 0.25)) {
+                                        store.setCategory(cat, for: item.id)
+                                    }
+                                }
+                            }
+                        } label: { Label("Move to", systemImage: "folder") }
+                    }
                     Button(role: .destructive) {
                         withAnimation(.easeOut(duration: 0.25)) { store.remove(item) }
                     } label: { Label("Remove", systemImage: "trash") }

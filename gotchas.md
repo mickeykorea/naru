@@ -75,3 +75,13 @@ sees nothing. Write to the real plist instead:
 where GroupContainer comes from `simctl get_app_container <UD> com.mickeyoh.naru groups`.
 UI tests assume seeded fixtures (a spotify item, an "Apple" tile) — reseed
 them on any fresh simulator before running NaruUITests.
+
+## 2026-07-09 — Sheets apply "elevated" appearance; semantic grays drift
+Inside a presented sheet, iOS switches the trait to .elevated, so
+Color(.systemGray6) renders LIGHTER than it does on the home screen and
+can collapse into systemBackground in dark mode (cards vanished). Two
+lessons: (1) to match a color across sheet/non-sheet contexts, use fixed
+UIColor(white:) values, not semantic colors; (2) dark-mode sheets have a
+narrow contrast band — dimmed presenter (~0.04) below, tile-matched cards
+(0.11) above — so the sheet background must sit in between (~0.075) or
+either the sheet edge or the card float disappears.

@@ -3,9 +3,16 @@ import SwiftUI
 struct SearchSheet: View {
     let items: [SavedItem]
     var onNoteChange: (UUID, String) -> Void = { _, _ in }
+    var onCategoryChange: (UUID, String) -> Void = { _, _ in }
     @State private var query = ""
     @State private var selectedItem: SavedItem?
     @FocusState private var focused: Bool
+
+    private var categories: [String] {
+        var seen = [String]()
+        for item in items where !seen.contains(item.category) { seen.append(item.category) }
+        return seen
+    }
 
     private var results: [SavedItem] {
         let q = query.trimmingCharacters(in: .whitespaces).lowercased()
@@ -84,7 +91,10 @@ struct SearchSheet: View {
                 .padding(.top, 10)
         }
         .sheet(item: $selectedItem) { item in
-            ItemDetailSheet(item: item) { onNoteChange(item.id, $0) }
+            ItemDetailSheet(item: item,
+                            categories: categories,
+                            onNoteChange: { onNoteChange(item.id, $0) },
+                            onCategoryChange: { onCategoryChange(item.id, $0) })
         }
         .onAppear { focused = true }
     }
