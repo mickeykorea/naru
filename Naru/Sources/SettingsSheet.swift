@@ -27,6 +27,11 @@ struct SettingsSheet: View {
     @Environment(\.dismiss) private var dismiss
     @AppStorage(Appearance.storageKey) private var appearanceRaw = Appearance.system.rawValue
 
+    // TODO: swap for the App Store link once Naru is published
+    private let shareURL = URL(string: "https://github.com/mickeykorea/naru")!
+    private let shareMessage = "Naru — a beautiful personal archive. Save anything, keep it beautifully."
+    private let siteURL = URL(string: "https://mickeyoh.com")!
+
     private var appearance: Binding<Appearance> {
         Binding(
             get: { Appearance(rawValue: appearanceRaw) ?? .system },
@@ -40,7 +45,7 @@ struct SettingsSheet: View {
                 VStack(alignment: .leading, spacing: 28) {
                     section("Appearance") {
                         SettingsGroup {
-                            pickerRow(icon: "circle.lefthalf.filled", title: "Theme",
+                            pickerRow(icon: "circle.lefthalf.filled.inverse", title: "Theme",
                                       selection: appearance)
                         }
                         caption("Naru follows your device by default.")
@@ -53,7 +58,7 @@ struct SettingsSheet: View {
                             NavigationLink {
                                 AboutView()
                             } label: {
-                                SettingsRow(icon: "info.circle", title: "About") {
+                                SettingsRow(icon: "info.circle.fill", title: "About") {
                                     Image(systemName: "chevron.right")
                                         .font(.system(size: 14, weight: .semibold))
                                         .foregroundStyle(Color(.systemGray3))
@@ -62,10 +67,16 @@ struct SettingsSheet: View {
                             .buttonStyle(.plain)
                         }
 
-                        Text("Designed & built by \(Text("mickey").foregroundStyle(.primary).fontWeight(.semibold))")
-                            .font(.system(size: 13))
-                            .foregroundStyle(Color(.systemGray))
-                            .padding(.horizontal, 24)
+                        HStack(spacing: 4) {
+                            Text("Designed & built by")
+                                .foregroundStyle(Color(.systemGray))
+                            Link("mickeyoh.com", destination: siteURL)
+                                .foregroundStyle(Color(.systemGray))
+                                .fontWeight(.semibold)
+                                .accessibilityIdentifier("site-link")
+                        }
+                        .font(.system(size: 13))
+                        .padding(.horizontal, 24)
                     }
                 }
                 .padding(.vertical, 24)
@@ -80,6 +91,16 @@ struct SettingsSheet: View {
                 ToolbarItem(placement: .topBarLeading) {
                     Button { dismiss() } label: {
                         Image(systemName: "xmark")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(.primary)
+                            .frame(width: 30, height: 30)
+                    }
+                    .tint(.primary)
+                    .glassEffect(.regular.interactive(), in: Circle())
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    ShareLink(item: shareURL, message: Text(shareMessage)) {
+                        Image(systemName: "square.and.arrow.up")
                             .font(.system(size: 15, weight: .semibold))
                             .foregroundStyle(.primary)
                             .frame(width: 30, height: 30)
@@ -167,27 +188,18 @@ struct SettingsRow<Trailing: View>: View {
     }
 }
 
-// icon in a softly domed circular chip — subtle top-lit gradient plus a
-// rim highlight reads as slightly raised, matching the reference
+// plain SF Symbol glyph, no chip — flat monochrome gray like the reference
 struct SettingsIcon: View {
     let name: String
 
     var body: some View {
         Image(systemName: name)
-            .font(.system(size: 14, weight: .semibold))
+            .font(.system(size: 20))
+            // monochrome (not hierarchical) so every glyph fills with the
+            // exact same systemGray — no per-layer opacity variation
+            .symbolRenderingMode(.monochrome)
             .foregroundStyle(Color(.systemGray))
-            .frame(width: 30, height: 30)
-            .background(
-                Circle().fill(
-                    .linearGradient(colors: [.chipTop, .chipBottom],
-                                    startPoint: .top, endPoint: .bottom))
-            )
-            .overlay(
-                Circle().strokeBorder(
-                    .linearGradient(colors: [.chipRim, .clear],
-                                    startPoint: .top, endPoint: .bottom),
-                    lineWidth: 0.75)
-            )
+            .frame(width: 28, height: 28)
     }
 }
 
@@ -205,15 +217,6 @@ extension Color {
         tc.userInterfaceStyle == .dark
             ? UIColor(red: 0.110, green: 0.110, blue: 0.118, alpha: 1)  // = systemGray6 dark
             : UIColor(red: 0.949, green: 0.949, blue: 0.969, alpha: 1)  // = systemGray6 light
-    })
-    static let chipTop = Color(UIColor { tc in
-        tc.userInterfaceStyle == .dark ? UIColor(white: 0.30, alpha: 1) : UIColor(white: 0.91, alpha: 1)
-    })
-    static let chipBottom = Color(UIColor { tc in
-        tc.userInterfaceStyle == .dark ? UIColor(white: 0.20, alpha: 1) : UIColor(white: 0.80, alpha: 1)
-    })
-    static let chipRim = Color(UIColor { tc in
-        tc.userInterfaceStyle == .dark ? UIColor(white: 1, alpha: 0.10) : UIColor(white: 1, alpha: 0.7)
     })
 }
 

@@ -19,6 +19,12 @@ struct SaveTile: View {
                 }
             }
         }
+        // the title/metadata row is leading-aligned single-line, leaving a
+        // transparent strip on the right of each cell. Without an explicit
+        // hit shape, taps there fall through to the nearest button — the
+        // adjacent tile — so a left-card tap sometimes opened the right one.
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
     }
 
     @ViewBuilder
