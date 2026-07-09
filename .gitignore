@@ -30,3 +30,7 @@ fastlane/test_output/
 # Claude Code local state (worktrees, session artifacts)
 .claude/worktrees/
 context-log.md
+
+# Docs kept local (IP) — README stays public
+*.md
+!README.md
