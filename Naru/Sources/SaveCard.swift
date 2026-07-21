@@ -34,12 +34,20 @@ struct SaveCard: View {
     }
 
     private var insetCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            metaLine()
-            title
-            thumbnail(aspect: Self.clampedAspect(for: item, in: 0.75...1.3), radius: 12)
+        VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: 8) {
+                metaLine()
+                title
+            }
+            .padding(.horizontal, 14)
+            .padding(.top, 14)
+            .padding(.bottom, 10)
+            // glass-slab thumbnail: bleeds to a 5pt inset so its radius
+            // runs concentric with the card's 22
+            thumbnail(aspect: Self.clampedAspect(for: item, in: 0.75...1.3), radius: 17)
+                .padding(.horizontal, 5)
+                .padding(.bottom, 5)
         }
-        .padding(14)
         .frame(maxWidth: .infinity, alignment: .topLeading)
         .background(surface)
     }
@@ -71,7 +79,7 @@ struct SaveCard: View {
     private func metaLine(tint: Color = Color(.systemGray)) -> some View {
         HStack(spacing: 5) {
             SourceIcon(domain: item.domain, tint: tint)
-            Text("\(item.domain) · \(Self.shortAge(item.savedAt))")
+            Text("\(SourceIcon.displayName(for: item.domain)) · \(Self.shortAge(item.savedAt))")
                 .font(.system(size: 13))
                 .foregroundStyle(tint)
                 .lineLimit(1)
@@ -100,7 +108,19 @@ struct SaveCard: View {
                         .aspectRatio(contentMode: .fill)
                 }
             }
-            .clipShape(RoundedRectangle(cornerRadius: radius))
+            .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
+            // glass-slab rim, hand-built: glassEffect(.clear) overlaid on the
+            // image blurs the whole thumbnail (tried, rejected) — a gradient
+            // specular stroke gives the lensed edge and keeps the image crisp
+            .overlay {
+                RoundedRectangle(cornerRadius: radius, style: .continuous)
+                    .strokeBorder(
+                        LinearGradient(colors: [.white.opacity(0.6),
+                                                .white.opacity(0.08),
+                                                .white.opacity(0.28)],
+                                       startPoint: .topLeading, endPoint: .bottomTrailing),
+                        lineWidth: 1)
+            }
     }
 
     // hasThumbnail can lie (file pruned or never written) — style decisions
@@ -180,24 +200,29 @@ struct SourceIcon: View {
     let domain: String
     var tint: Color = Color(.systemGray)
 
-    private static let brands: [(match: String, asset: String)] = [
-        ("x.com", "brand-x"), ("twitter", "brand-x"),
-        ("instagram", "brand-instagram"), ("notion", "brand-notion"),
-        ("spotify", "brand-spotify"),
-        ("youtube", "brand-youtube"), ("youtu.be", "brand-youtube"),
-        ("reddit", "brand-reddit"),
-        ("pinterest", "brand-pinterest"), ("tiktok", "brand-tiktok"),
-        ("github", "brand-github"), ("medium.com", "brand-medium"),
-        ("substack", "brand-substack"), ("netflix", "brand-netflix"),
-        ("figma", "brand-figma"), ("facebook", "brand-facebook"),
-        ("threads", "brand-threads"), ("t.me", "brand-telegram"),
-        ("telegram", "brand-telegram"), ("whatsapp", "brand-whatsapp"),
-        ("twitch", "brand-twitch"), ("soundcloud", "brand-soundcloud"),
-        ("apple.com", "brand-apple"), ("google", "brand-google"),
-        ("naver", "brand-naver"), ("kakao", "brand-kakaotalk"),
-        ("nytimes", "brand-newyorktimes"), ("dribbble", "brand-dribbble"),
-        ("behance", "brand-behance"), ("vimeo", "brand-vimeo"),
+    private static let brands: [(match: String, asset: String, name: String)] = [
+        ("x.com", "brand-x", "x"), ("twitter", "brand-x", "x"),
+        ("instagram", "brand-instagram", "instagram"), ("notion", "brand-notion", "notion"),
+        ("spotify", "brand-spotify", "spotify"),
+        ("youtube", "brand-youtube", "youtube"), ("youtu.be", "brand-youtube", "youtube"),
+        ("reddit", "brand-reddit", "reddit"),
+        ("pinterest", "brand-pinterest", "pinterest"), ("tiktok", "brand-tiktok", "tiktok"),
+        ("github", "brand-github", "github"), ("medium.com", "brand-medium", "medium"),
+        ("substack", "brand-substack", "substack"), ("netflix", "brand-netflix", "netflix"),
+        ("figma", "brand-figma", "figma"), ("facebook", "brand-facebook", "facebook"),
+        ("threads", "brand-threads", "threads"), ("t.me", "brand-telegram", "telegram"),
+        ("telegram", "brand-telegram", "telegram"), ("whatsapp", "brand-whatsapp", "whatsapp"),
+        ("twitch", "brand-twitch", "twitch"), ("soundcloud", "brand-soundcloud", "soundcloud"),
+        ("apple.com", "brand-apple", "apple"), ("google", "brand-google", "google"),
+        ("naver", "brand-naver", "naver"), ("kakao", "brand-kakaotalk", "kakao"),
+        ("nytimes", "brand-newyorktimes", "nytimes"), ("dribbble", "brand-dribbble", "dribbble"),
+        ("behance", "brand-behance", "behance"), ("vimeo", "brand-vimeo", "vimeo"),
     ]
+
+    // known brands read by name; random weblinks keep their raw domain
+    static func displayName(for domain: String) -> String {
+        brands.first(where: { domain.contains($0.match) })?.name ?? domain
+    }
 
     var body: some View {
         Group {

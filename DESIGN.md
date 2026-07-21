@@ -74,8 +74,10 @@ No textures, no gradients, no themed palettes.
   inside the card (nothing below it): metadata line (SourceIcon glyph +
   "domain · 2w", 13 gray) → title 17 bold ≤3 lines → then per variant:
   - Text card: summary preview, Garamond 15 gray, ≤6 lines, padding 16
-  - Inset-image card: thumbnail rounded 12, natural aspect clamped
-    w/h 0.75–1.3, padding 14
+  - Inset-image card: glass-slab thumbnail — bleeds to a 5pt inset
+    (radius 17 continuous, concentric with the card's 22), natural aspect
+    clamped w/h 0.75–1.3, 1pt gradient specular rim (white 0.6 topLeading
+    → 0.08 → 0.28 bottomTrailing); text block padded 14
   - Full-bleed card: every 3rd loadable-thumbnail save; edge-to-edge
     image (aspect 0.68–0.95), black 0.55→clear top scrim, white text.
     Not used in the search sheet.
@@ -102,6 +104,9 @@ No textures, no gradients, no themed palettes.
   search and ellipsis stay clear `.regular.interactive()`) and the toast.
   Both bottom buttons share one GlassEffectContainer. In-sheet buttons
   stay solid black per the Genie reference.
+- Never overlay glassEffect on imagery: `.clear` glass over a thumbnail
+  blurs the whole image milky (tried 2026-07-21, rejected). The iOS 27
+  glass-slab look is hand-built: crisp image + gradient specular stroke.
 - Status-bar frost: Naru has no nav bar, so `scrollEdgeEffectStyle` won't
   render. Use `VariableBlurView` (Sources/VariableBlur.swift) — a true
   progressive blur (radius 9, 82pt band, quadratic ease-out mask so the
@@ -122,6 +127,9 @@ Glyphs are optically normalized to icon-grid key heights on the 24-unit
 canvas (round 20 · default 19.4 · dense square 18.6 · solid rect 18.8 ·
 wide width-capped 22.5) — when adding an icon, wrap its path in the same
 transform pattern; never ship a raw 24×24 Simple Icons file.
+Known brands display a short lowercase name in metadata ("spotify",
+"youtube", "x", "nytimes") via SourceIcon.displayName; unknown domains
+keep the raw domain. New brands get a name in the same table row.
 
 ## App icon
 - White ground (#FFF), black organic vessel: two billowed sails (bezier
@@ -153,3 +161,4 @@ transform pattern; never ship a raw 24×24 Simple Icons file.
 | 2026-07-21 | Notes-style masonry adopted: staggered cards, content inside the card, every-3rd full-bleed | Mickey supplied the Apple press shot as the layout reference |
 | 2026-07-21 | Save pill retired → 52pt glass plus bottom-right, search moved to bottom-left, ellipsis alone top-right | Mickey: no big pill when a corner plus works; full reference match chosen |
 | 2026-07-21 | Wash darkened to 0.97→0.93 (dark 0.05→0); cards secondarySystemGroupedBackground | White cards need a gray ground to read as surfaces |
+| 2026-07-21 | Brand short names in metadata; glass-slab inset thumbnails (5pt bleed + specular rim, no glassEffect overlay) | Mickey: "just be spotify"; iOS 27-crop reference; .clear glass over images blurs them |
