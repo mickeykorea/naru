@@ -5,12 +5,17 @@ struct ContentView: View {
     @State private var selectedTab: String? = nil
     @State private var showSaveSheet = false
     @State private var showSearch = false
+    @State private var showSettings = false
+    @AppStorage(Appearance.storageKey) private var appearanceRaw = Appearance.system.rawValue
     @State private var selectedItem: SavedItem? = nil
     @State private var toast: String? = nil
     @State private var bottomBarHidden = false
     @State private var lastScrollOffset: CGFloat = 0
     @State private var scrollRun: CGFloat = 0
     @State private var pushEdge: Edge = .trailing
+    // a horizontal page-swipe never scrolls, so it doesn't cancel tile
+    // buttons the way vertical scrolling does — veto their taps instead
+    @State private var suppressTileTaps = false
     @Environment(\.scenePhase) private var scenePhase
 
     private var shown: [SavedItem] {
@@ -89,7 +94,17 @@ struct ContentView: View {
                 // vertical scrolling keeps priority (simultaneous, high bar)
                 .simultaneousGesture(
                     DragGesture(minimumDistance: 25)
+                        .onChanged { value in
+                            if abs(value.translation.width) > abs(value.translation.height) {
+                                suppressTileTaps = true
+                            }
+                        }
                         .onEnded { value in
+                            // the tile's touch-up lands around the same
+                            // moment as this — lift the veto a beat later
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                                suppressTileTaps = false
+                            }
                             let dx = value.translation.width
                             let dy = value.translation.height
                             guard abs(dx) > 60, abs(dx) > abs(dy) * 1.5 else { return }
@@ -125,15 +140,29 @@ struct ContentView: View {
             SaveSheet(existingCategories: store.categories, onSave: save)
         }
         .sheet(isPresented: $showSearch) {
-            SearchSheet(items: store.items) { id, note in store.setNote(note, for: id) }
+            SearchSheet(items: store.items,
+                        onNoteChange: { store.setNote($1, for: $0) },
+                        onCategoryChange: { store.setCategory($1, for: $0) })
+        }
+        .sheet(isPresented: $showSettings) {
+            SettingsSheet()
         }
         .sheet(item: $selectedItem) { item in
-            ItemDetailSheet(item: item) { store.setNote($0, for: item.id) }
+            ItemDetailSheet(item: item,
+                            categories: store.categories,
+                            onNoteChange: { store.setNote($0, for: item.id) },
+                            onCategoryChange: { store.setCategory($0, for: item.id) })
         }
         .onAppear {
             #if DEBUG
             if ProcessInfo.processInfo.arguments.contains("-naru-demo-detail") {
                 selectedItem = store.items.first
+            }
+            if ProcessInfo.processInfo.arguments.contains("-naru-demo-toast") {
+                toast = "Saved to Reading"
+            }
+            if ProcessInfo.processInfo.arguments.contains("-naru-demo-settings") {
+                showSettings = true
             }
             if ProcessInfo.processInfo.arguments.contains("-naru-demo-share") {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
@@ -156,6 +185,7 @@ struct ContentView: View {
             }
         }
         .task { await store.upgradeSummaries() }
+        .preferredColorScheme((Appearance(rawValue: appearanceRaw) ?? .system).colorScheme)
     }
 
     #if DEBUG
@@ -196,7 +226,11 @@ struct ContentView: View {
 
     private var moreButton: some View {
         Menu {
-            Button("Nothing here yet", action: {}).disabled(true)
+            Button {
+                showSettings = true
+            } label: {
+                Label("Settings", systemImage: "gearshape")
+            }
         } label: {
             Image(systemName: "ellipsis")
                 .font(.system(size: 15, weight: .semibold))
@@ -207,6 +241,7 @@ struct ContentView: View {
         .glassEffect(.regular.interactive(), in: Circle())
         .padding(.trailing, 20)
         .padding(.top, 8)
+        .accessibilityIdentifier("more-button")
     }
 
     private var tabs: some View {
@@ -250,7 +285,10 @@ struct ContentView: View {
 
     private var grid: some View {
         MasonryGrid(entries: styledEntries) { item, style, position in
-            Button { selectedItem = item } label: {
+            Button {
+                guard !suppressTileTaps else { return }
+                selectedItem = item
+            } label: {
                 SaveCard(item: item, style: style,
                          cropNudge: SaveCard.cropNudges[position % 3])
             }
@@ -258,6 +296,18 @@ struct ContentView: View {
             .id(item.id)
             .transition(.opacity.combined(with: .scale(scale: 0.97)))
             .contextMenu {
+                let others = store.categories.filter { $0 != item.category }
+                if !others.isEmpty {
+                    Menu {
+                        ForEach(others, id: \.self) { cat in
+                            Button(cat) {
+                                withAnimation(.easeOut(duration: 0.25)) {
+                                    store.setCategory(cat, for: item.id)
+                                }
+                            }
+                        }
+                    } label: { Label("Move to", systemImage: "folder") }
+                }
                 Button(role: .destructive) {
                     withAnimation(.easeOut(duration: 0.25)) { store.remove(item) }
                 } label: { Label("Remove", systemImage: "trash") }
@@ -294,6 +344,14 @@ struct ContentView: View {
             .allowsHitTesting(false)
     }
 
+    // theme-matched glass: blends with the wash instead of contrasting —
+    // near-white translucent in light mode, dark grey in dark mode
+    private var savePillTint: Color {
+        colorScheme == .dark
+            ? Color(white: 0.16).opacity(0.9)
+            : Color.white.opacity(0.45)
+    }
+
     // Notes-ref corner chrome: search bottom-left, save bottom-right
     private var bottomBar: some View {
         GlassEffectContainer {
@@ -327,10 +385,10 @@ struct ContentView: View {
     private func toastView(_ message: String) -> some View {
         Text(message)
             .font(.system(size: 13, weight: .medium))
-            .foregroundStyle(Color(.systemBackground))
+            .foregroundStyle(.primary)
             .padding(.horizontal, 18)
             .padding(.vertical, 10)
-            .glassEffect(.regular.tint(.primary.opacity(0.92)))
+            .glassEffect(.regular.tint(savePillTint))
             .padding(.bottom, 92)
             .transition(.move(edge: .bottom).combined(with: .opacity))
     }

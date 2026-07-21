@@ -10,10 +10,15 @@ struct PressableStyle: ButtonStyle {
 
 struct ItemDetailSheet: View {
     let item: SavedItem
+    var categories: [String] = []
     var onNoteChange: (String) -> Void = { _ in }
+    var onCategoryChange: (String) -> Void = { _ in }
     @Environment(\.openURL) private var openURL
     @State private var detent: PresentationDetent = .medium
     @State private var note: String = ""
+    @State private var category: String = ""
+    @State private var showNewCategory = false
+    @State private var newCategoryName = ""
     @State private var scrollY: CGFloat = 0
 
     private let heroTopInset: CGFloat = 34
@@ -64,6 +69,9 @@ struct ItemDetailSheet: View {
         .presentationDetents([.medium, .large], selection: $detent)
         .presentationDragIndicator(.hidden)
         .presentationCornerRadius(28)
+        // the default sheet background is translucent glass at .medium,
+        // which reads as a different color than the hero's opaque shield
+        .presentationBackground(Color(.systemBackground))
         // custom grabber, lower than the system's 5pt (matches the Genie
         // reference; the 28pt corner radius needs the extra air)
         .overlay(alignment: .top) {
@@ -72,8 +80,24 @@ struct ItemDetailSheet: View {
                 .frame(width: 36, height: 5)
                 .padding(.top, 10)
         }
+        .alert("New Category", isPresented: $showNewCategory) {
+            TextField("Name", text: $newCategoryName)
+                .textInputAutocapitalization(.words)
+            Button("Cancel", role: .cancel) { newCategoryName = "" }
+            Button("Move") {
+                let trimmed = newCategoryName.trimmingCharacters(in: .whitespaces)
+                if !trimmed.isEmpty {
+                    category = trimmed
+                    onCategoryChange(trimmed)
+                }
+                newCategoryName = ""
+            }
+        } message: {
+            Text("Move this save to a new category.")
+        }
         .onAppear {
             note = item.note ?? ""
+            category = item.category
             #if DEBUG
             if ProcessInfo.processInfo.arguments.contains("-naru-demo-large") {
                 detent = .large
@@ -116,9 +140,50 @@ struct ItemDetailSheet: View {
             .padding(.top, 20)
 
             VStack(alignment: .leading, spacing: 12) {
-                Text("NOTE")
-                    .font(.system(size: 12, weight: .medium))
-                    .tracking(0.6)
+                Text("Category")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Color(.systemGray))
+                Menu {
+                    ForEach(categories, id: \.self) { cat in
+                        Button {
+                            category = cat
+                            onCategoryChange(cat)
+                        } label: {
+                            if cat == category {
+                                Label(cat, systemImage: "checkmark")
+                            } else {
+                                Text(cat)
+                            }
+                        }
+                    }
+                    Divider()
+                    Button {
+                        showNewCategory = true
+                    } label: {
+                        Label("New Category…", systemImage: "plus")
+                    }
+                } label: {
+                    HStack(spacing: 6) {
+                        Text(category)
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 12, weight: .semibold))
+                    }
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(.primary)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 9)
+                    .background(Color(.systemGray6), in: Capsule())
+                }
+                .tint(.primary)
+                .accessibilityIdentifier("category-pill")
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 24)
+            .padding(.top, 36)
+
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Note")
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(Color(.systemGray))
                 TextField("Add a note…", text: $note, axis: .vertical)
                     .font(.garamond(17))
@@ -132,9 +197,8 @@ struct ItemDetailSheet: View {
 
             if let summary = item.summary, !summary.isEmpty {
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("SUMMARY")
-                        .font(.system(size: 12, weight: .medium))
-                        .tracking(0.6)
+                    Text("Summary")
+                        .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(Color(.systemGray))
                     Text(summary)
                         .font(.garamond(17))

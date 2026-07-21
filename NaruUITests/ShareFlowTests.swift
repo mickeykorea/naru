@@ -48,8 +48,9 @@ final class ShareFlowTests: XCTestCase {
         app.terminate()
         let clean = XCUIApplication(bundleIdentifier: "com.mickeyoh.naru")
         clean.launch()
+        // metadata shows the short brand name ("apple · 2w"), not the domain
         let savedTile = clean.staticTexts.matching(
-            NSPredicate(format: "label CONTAINS 'apple.com'")).firstMatch
+            NSPredicate(format: "label CONTAINS[c] 'apple'")).firstMatch
         XCTAssertTrue(savedTile.waitForExistence(timeout: 10), "shared item not in archive")
 
         let appShot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())

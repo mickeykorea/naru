@@ -58,9 +58,8 @@ struct ShareSaveView: View {
                 previewRow
 
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("CATEGORY")
-                        .font(.system(size: 12, weight: .medium))
-                        .tracking(0.6)
+                    Text("Category")
+                        .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(Color(.systemGray))
                     FlowChips(choices: categoryChoices, selected: $selectedCategory)
                         .onChange(of: selectedCategory) { if selectedCategory != nil { newCategory = "" } }

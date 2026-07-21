@@ -51,9 +51,8 @@ struct SaveSheet: View {
             }
 
             VStack(alignment: .leading, spacing: 12) {
-                Text("CATEGORY")
-                    .font(.system(size: 12, weight: .medium))
-                    .tracking(0.6)
+                Text("Category")
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(Color(.systemGray))
                 categoryPicker
             }
