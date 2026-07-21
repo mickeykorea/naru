@@ -43,10 +43,21 @@ struct SaveCard: View {
             .padding(.horizontal, 14)
             .padding(.top, 14)
             .padding(.bottom, 10)
-            // literal overflow: the image runs 6pt past each side and out
-            // the bottom; the card's own clip crops it
+            // Notes-ref slab: gutters + own top radius, but the bottom runs
+            // 20pt past the card and the card's clip cuts it — with a
+            // progressive blur at the cut edge so the image reads as
+            // continuing beneath
             overflowThumbnail(aspect: Self.insetAspect(for: item, nudge: cropNudge))
-                .padding(.horizontal, -6)
+                .clipShape(UnevenRoundedRectangle(topLeadingRadius: 14,
+                                                  topTrailingRadius: 14,
+                                                  style: .continuous))
+                .overlay(alignment: .bottom) {
+                    VariableBlurView(maxBlurRadius: 7, flipped: true)
+                        .frame(height: 56)
+                        .allowsHitTesting(false)
+                }
+                .padding(.horizontal, 12)
+                .padding(.bottom, -20)
         }
         .frame(maxWidth: .infinity, alignment: .topLeading)
         .background(surface)
@@ -195,9 +206,9 @@ struct MasonryGrid<Card: View>: View {
         case .fullBleed:
             return width / SaveCard.clampedAspect(for: item, in: 0.68...0.95)
         case .inset:
-            // overflowing image is 12pt wider than the card
-            return 24 + 16 + 8 + titleHeight
-                + (width + 12) / SaveCard.insetAspect(
+            // image is 24pt narrower than the card; 20pt of it is cut off
+            return 24 + 16 + 8 + titleHeight - 20
+                + (width - 24) / SaveCard.insetAspect(
                     for: item, nudge: SaveCard.cropNudges[position % 3])
         case .text:
             let previewLines = min(SaveCard.previewLineLimit(for: item),

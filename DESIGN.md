@@ -75,11 +75,13 @@ No textures, no gradients, no themed palettes.
   "domain · 2w", 13 gray) → title 17 bold ≤3 lines → then per variant:
   - Text card: summary preview, Garamond 15 gray, padding 16; line cap
     varies 3/5/7 per item (stable id hash) so text cards never tie
-  - Inset-image card: overflowing thumbnail — runs 6pt past each side and
-    out the bottom, cropped by the card's own 22 continuous clip; natural
-    aspect clamped w/h 0.66–1.5 after a crop nudge (0.78/1.0/1.22 cycled
-    by masonry position, so same-ratio sources can't tie heights); text
-    block padded 14
+  - Inset-image card: thumbnail keeps 12pt side gutters and its own top
+    radius (14 continuous, square bottom), but runs 20pt past the card
+    bottom — the card's 22 clip cuts it, and a flipped VariableBlurView
+    band (radius 7, 56pt) defocuses the cut edge so the image reads as
+    continuing beneath. Natural aspect clamped w/h 0.66–1.5 after a crop
+    nudge (0.78/1.0/1.22 cycled by masonry position, so same-ratio
+    sources can't tie heights); text block padded 14
   - Full-bleed card: every 3rd loadable-thumbnail save; edge-to-edge
     image (aspect 0.68–0.95), black 0.55→clear top scrim, white text.
     Not used in the search sheet.
@@ -108,7 +110,9 @@ No textures, no gradients, no themed palettes.
   stay solid black per the Genie reference.
 - Never overlay glassEffect on imagery: `.clear` glass over a thumbnail
   blurs the whole image milky (tried 2026-07-21, rejected). Thumbnails
-  stay crisp; depth comes from the overflow crop, not a material.
+  stay crisp; the liquid overflow cue is VariableBlurView(flipped:) — the
+  flip is in the gradient mask, never a view transform (a transform
+  mirrors the sampled backdrop).
 - Status-bar frost: Naru has no nav bar, so `scrollEdgeEffectStyle` won't
   render. Use `VariableBlurView` (Sources/VariableBlur.swift) — a true
   progressive blur (radius 9, 82pt band, quadratic ease-out mask so the
@@ -164,4 +168,4 @@ keep the raw domain. New brands get a name in the same table row.
 | 2026-07-21 | Save pill retired → 52pt glass plus bottom-right, search moved to bottom-left, ellipsis alone top-right | Mickey: no big pill when a corner plus works; full reference match chosen |
 | 2026-07-21 | Wash darkened to 0.97→0.93 (dark 0.05→0); cards secondarySystemGroupedBackground | White cards need a gray ground to read as surfaces |
 | 2026-07-21 | Brand short names in metadata; no glassEffect overlay on imagery | Mickey: "just be spotify"; .clear glass over images blurs them |
-| 2026-07-22 | Inset thumbnails literally overflow the card (6pt sides + bottom, card clips); stagger forced via 3/5/7 preview caps + positional crop nudges | Mickey: "literally overflow"; "the point is not to be listing them uniformly" — id-hash seeding alone let neighbors tie |
+| 2026-07-22 | Inset thumbnails overflow the card bottom only (12pt gutters, top radius 14, 20pt cut) with a flipped-VariableBlur liquid edge; stagger forced via 3/5/7 preview caps + positional crop nudges | Mickey's zoomed Notes crop: gutters + radius stay, bottom cut reads "overflowing"; full-width bleed rejected |

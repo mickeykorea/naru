@@ -13,9 +13,13 @@ import UIKit
 // must be re-asserted whenever the system clobbers it, not applied once.
 struct VariableBlurView: UIViewRepresentable {
     var maxBlurRadius: CGFloat = 10
+    // false: blur strongest at top, dissolving down (status-bar frost);
+    // true: strongest at bottom (overflow cue at a cut edge). Flipping the
+    // mask, not the view — a transform would mirror the sampled backdrop.
+    var flipped = false
 
     func makeUIView(context: Context) -> VariableBlurUIView {
-        VariableBlurUIView(maxBlurRadius: maxBlurRadius)
+        VariableBlurUIView(maxBlurRadius: maxBlurRadius, flipped: flipped)
     }
 
     func updateUIView(_ uiView: VariableBlurUIView, context: Context) {}
@@ -24,6 +28,7 @@ struct VariableBlurView: UIViewRepresentable {
 final class VariableBlurUIView: UIVisualEffectView {
 
     private let maxBlurRadius: CGFloat
+    private let flipped: Bool
     private var variableBlur: NSObject?
     private var activationObserver: NSObjectProtocol?
 
@@ -34,8 +39,9 @@ final class VariableBlurUIView: UIVisualEffectView {
         subviews.first { String(describing: type(of: $0.layer)).contains("Backdrop") }
     }
 
-    init(maxBlurRadius: CGFloat) {
+    init(maxBlurRadius: CGFloat, flipped: Bool = false) {
         self.maxBlurRadius = maxBlurRadius
+        self.flipped = flipped
         super.init(effect: UIBlurEffect(style: .regular))
         applyFilter()
         activationObserver = NotificationCenter.default.addObserver(
@@ -75,7 +81,7 @@ final class VariableBlurUIView: UIVisualEffectView {
         guard let backdrop else { isHidden = true; return }
 
         if variableBlur == nil {
-            variableBlur = Self.makeVariableBlur(radius: maxBlurRadius)
+            variableBlur = Self.makeVariableBlur(radius: maxBlurRadius, flipped: flipped)
         }
         guard let variableBlur else { isHidden = true; return }
         isHidden = false
@@ -95,12 +101,12 @@ final class VariableBlurUIView: UIVisualEffectView {
         }
     }
 
-    private static func makeVariableBlur(radius: CGFloat) -> NSObject? {
+    private static func makeVariableBlur(radius: CGFloat, flipped: Bool) -> NSObject? {
         guard let filterClass = NSClassFromString("CAFilter") as? NSObject.Type,
               let filter = filterClass
                 .perform(NSSelectorFromString("filterWithType:"), with: "variableBlur")?
                 .takeUnretainedValue() as? NSObject,
-              let gradient = gradientMask() else {
+              let gradient = gradientMask(flipped: flipped) else {
             return nil
         }
         filter.setValue(radius, forKey: "inputRadius")
@@ -113,13 +119,13 @@ final class VariableBlurUIView: UIVisualEffectView {
     // A linear ramp leaves residual radius at the band's bottom edge, which
     // renders as a visible seam where the frame ends; ease the decay so the
     // radius genuinely hits zero before the edge and the blur just dissolves.
-    private static func gradientMask() -> CGImage? {
+    private static func gradientMask(flipped: Bool) -> CGImage? {
         let height = 128
         let renderer = UIGraphicsImageRenderer(size: CGSize(width: 1, height: CGFloat(height)))
         let image = renderer.image { ctx in
             for y in 0..<height {
                 let t = CGFloat(y) / CGFloat(height - 1)
-                let eased = (1 - t) * (1 - t)
+                let eased = flipped ? t * t : (1 - t) * (1 - t)
                 ctx.cgContext.setFillColor(UIColor.black.withAlphaComponent(eased).cgColor)
                 ctx.cgContext.fill(CGRect(x: 0, y: CGFloat(y), width: 1, height: 1))
             }
