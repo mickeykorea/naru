@@ -76,7 +76,7 @@ No textures, no gradients, no themed palettes.
   - Text card: summary preview, Garamond 15 gray, padding 16; line cap
     varies 3/5/7 per item (stable id hash) so text cards never tie
   - Inset-image card: thumbnail keeps 12pt side gutters and its own top
-    radius (14 continuous, square bottom), but runs 20pt past the card
+    radius (20 continuous, square bottom), but runs 20pt past the card
     bottom — the card's 22 clip cuts it, and a flipped VariableBlurView
     band (radius 7, 56pt) defocuses the cut edge so the image reads as
     continuing beneath. Natural aspect clamped w/h 0.66–1.5 after a crop

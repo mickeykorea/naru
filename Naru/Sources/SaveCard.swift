@@ -48,8 +48,8 @@ struct SaveCard: View {
             // progressive blur at the cut edge so the image reads as
             // continuing beneath
             overflowThumbnail(aspect: Self.insetAspect(for: item, nudge: cropNudge))
-                .clipShape(UnevenRoundedRectangle(topLeadingRadius: 14,
-                                                  topTrailingRadius: 14,
+                .clipShape(UnevenRoundedRectangle(topLeadingRadius: 20,
+                                                  topTrailingRadius: 20,
                                                   style: .continuous))
                 .overlay(alignment: .bottom) {
                     VariableBlurView(maxBlurRadius: 7, flipped: true)
