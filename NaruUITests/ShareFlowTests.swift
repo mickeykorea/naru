@@ -64,6 +64,7 @@ final class CategoryPagingTests: XCTestCase {
 
     func testSwipePagesBetweenCategories() throws {
         let app = XCUIApplication(bundleIdentifier: "com.mickeyoh.naru")
+        app.launchArguments = ["-naru-uitest-seed", "paging"]
         app.launch()
 
         let scroll = app.scrollViews.firstMatch
@@ -97,6 +98,8 @@ final class NoteTests: XCTestCase {
 
     func testNotePersistsAcrossSheetOpens() throws {
         let app = XCUIApplication(bundleIdentifier: "com.mickeyoh.naru")
+        // run-unique: survives the mid-test relaunch, resets next run
+        app.launchArguments = ["-naru-uitest-seed", "note-\(UUID().uuidString)"]
         app.launch()
 
         let tile = app.staticTexts["Apple"].firstMatch
@@ -129,7 +132,8 @@ final class HeroCollapseTests: XCTestCase {
 
     func testHeroShrinksWithScrollAndFloors() throws {
         let app = XCUIApplication(bundleIdentifier: "com.mickeyoh.naru")
-        app.launchArguments = ["-naru-demo-detail", "-naru-demo-large"]
+        app.launchArguments = ["-naru-demo-detail", "-naru-demo-large",
+                               "-naru-uitest-seed", "hero"]
         app.launch()
 
         let hero = app.descendants(matching: .any)
@@ -138,7 +142,14 @@ final class HeroCollapseTests: XCTestCase {
         let full = hero.frame.height
         XCTAssertGreaterThan(full, 200, "hero should start near full height")
 
-        app.swipeUp(velocity: .slow)
+        // drag from low on the screen: a center swipe can start on the
+        // pinned hero overlay (tall thumbnails) and never reach the scroll
+        let dragUp = {
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.85))
+                .press(forDuration: 0.05,
+                       thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.25)))
+        }
+        dragUp()
         sleep(1)
         let collapsed = hero.frame.height
         let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
@@ -148,7 +159,7 @@ final class HeroCollapseTests: XCTestCase {
         XCTAssertLessThan(collapsed, full - 40, "hero should shrink with scroll")
 
         // keep scrolling: hero must pin at the floor, never vanish
-        app.swipeUp()
+        dragUp()
         sleep(1)
         let floored = hero.frame.height
         XCTAssertGreaterThanOrEqual(floored, 118, "hero must not collapse past the floor")
@@ -159,6 +170,7 @@ final class SearchTests: XCTestCase {
 
     func testSearchFiltersAcrossFields() throws {
         let app = XCUIApplication(bundleIdentifier: "com.mickeyoh.naru")
+        app.launchArguments = ["-naru-uitest-seed", "search"]
         app.launch()
 
         let button = app.buttons["search-button"]

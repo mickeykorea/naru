@@ -61,9 +61,16 @@ struct ItemDetailSheet: View {
                     .padding(.horizontal, 12)
                     .padding(.top, heroTopInset)
                     .frame(maxWidth: .infinity)
-                    // opaque shield: content scrolls under the pinned hero
-                    .background(Color(.systemBackground))
-                    .accessibilityIdentifier("detail-hero")
+                    // opaque shield: content scrolls under the pinned hero.
+                    // it also carries the test identifier — the image stack
+                    // reports a11y frames as the union of children, and the
+                    // fill image overflows its clip, so portrait heroes
+                    // would measure at a fixed, wrong height
+                    .background(
+                        Color(.systemBackground)
+                            .accessibilityElement()
+                            .accessibilityIdentifier("detail-hero")
+                    )
             }
         }
         .presentationDetents([.medium, .large], selection: $detent)

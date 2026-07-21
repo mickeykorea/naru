@@ -41,11 +41,32 @@ enum SharedStorage {
 final class ArchiveStore: ObservableObject {
     @Published private(set) var items: [SavedItem] = []
 
-    private static let key = "naru.archive.v2"
+    #if DEBUG
+    // "-naru-uitest-seed <id>" redirects storage to a parallel key and
+    // thumbnail directory so UI tests never touch the real archive
+    static var uiTestSeedID: String? {
+        let args = ProcessInfo.processInfo.arguments
+        guard let index = args.firstIndex(of: "-naru-uitest-seed"),
+              args.indices.contains(index + 1) else { return nil }
+        return args[index + 1]
+    }
+    #endif
+
+    static var key: String {
+        #if DEBUG
+        if uiTestSeedID != nil { return "naru.archive.uitest" }
+        #endif
+        return "naru.archive.v2"
+    }
 
     static var thumbnailDirectory: URL {
+        #if DEBUG
+        let name = uiTestSeedID == nil ? "thumbnails" : "thumbnails-uitest"
+        #else
+        let name = "thumbnails"
+        #endif
         let dir = SharedStorage.containerURL
-            .appendingPathComponent("thumbnails", isDirectory: true)
+            .appendingPathComponent(name, isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir
     }

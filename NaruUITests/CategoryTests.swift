@@ -3,6 +3,9 @@ import XCTest
 final class CategoryChangeTests: XCTestCase {
     func testCategoryChangePersists() throws {
         let app = XCUIApplication(bundleIdentifier: "com.mickeyoh.naru")
+        // run-unique id: stable across the mid-test relaunch (the change
+        // must persist), fresh on the next run (the change must not)
+        app.launchArguments = ["-naru-uitest-seed", "category-persist-\(UUID().uuidString)"]
         app.launch()
         app.staticTexts["Charm"].firstMatch.tap()
         let pill = app.buttons["category-pill"].firstMatch
@@ -22,6 +25,7 @@ final class CategoryChangeTests: XCTestCase {
 
     func testContextMenuHasMoveTo() throws {
         let app = XCUIApplication(bundleIdentifier: "com.mickeyoh.naru")
+        app.launchArguments = ["-naru-uitest-seed", "category-move"]
         app.launch()
         let tile = app.staticTexts["Apple"].firstMatch
         XCTAssertTrue(tile.waitForExistence(timeout: 8))
