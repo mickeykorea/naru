@@ -7,7 +7,7 @@ struct ContentView: View {
     @State private var showSearch = false
     @State private var selectedItem: SavedItem? = nil
     @State private var toast: String? = nil
-    @State private var saveButtonHidden = false
+    @State private var bottomBarHidden = false
     @State private var lastScrollOffset: CGFloat = 0
     @State private var scrollRun: CGFloat = 0
     @State private var pushEdge: Edge = .trailing
@@ -69,7 +69,7 @@ struct ContentView: View {
                     let delta = offset - lastScrollOffset
                     lastScrollOffset = offset
                     if offset <= minOffset + 8 {
-                        saveButtonHidden = false
+                        bottomBarHidden = false
                         scrollRun = 0
                         return
                     }
@@ -80,9 +80,9 @@ struct ContentView: View {
                     if (delta >= 0) != (scrollRun >= 0) { scrollRun = 0 }
                     scrollRun += delta
                     if scrollRun > 12 {
-                        saveButtonHidden = true
+                        bottomBarHidden = true
                     } else if scrollRun < -12 {
-                        saveButtonHidden = false
+                        bottomBarHidden = false
                     }
                 }
                 // horizontal-dominant swipes page between categories;
@@ -108,12 +108,11 @@ struct ContentView: View {
                 }
             }
             if store.items.isEmpty { emptyState }
-            saveButton
+            bottomBar
             if let toast { toastView(toast) }
         }
         .overlay(alignment: .top) { statusBarFrost }
-        .overlay(alignment: .topLeading) { moreButton }
-        .overlay(alignment: .topTrailing) { searchButton }
+        .overlay(alignment: .topTrailing) { moreButton }
         #if DEBUG
         .overlay {
             if ProcessInfo.processInfo.arguments.contains("-naru-demo-type") {
@@ -185,12 +184,13 @@ struct ContentView: View {
     }
     #endif
 
-    // near-white wash, breathing slightly brighter at the top (Clock ref)
+    // light-gray wash, breathing slightly brighter at the top (Clock ref);
+    // darkened from near-white so the white masonry cards read as surfaces
     @Environment(\.colorScheme) private var colorScheme
     private var backgroundWash: LinearGradient {
         let colors = colorScheme == .dark
-            ? [Color(white: 0.09), Color(white: 0)]
-            : [Color(white: 1.0), Color(white: 0.955)]
+            ? [Color(white: 0.05), Color(white: 0)]
+            : [Color(white: 0.97), Color(white: 0.93)]
         return LinearGradient(colors: colors, startPoint: .top, endPoint: .bottom)
     }
 
@@ -205,24 +205,8 @@ struct ContentView: View {
         }
         .tint(.primary)
         .glassEffect(.regular.interactive(), in: Circle())
-        .padding(.leading, 20)
-        .padding(.top, 8)
-    }
-
-    private var searchButton: some View {
-        Button {
-            showSearch = true
-        } label: {
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(.primary)
-                .frame(width: 44, height: 44)
-        }
-        .tint(.primary)
-        .glassEffect(.regular.interactive(), in: Circle())
         .padding(.trailing, 20)
         .padding(.top, 8)
-        .accessibilityIdentifier("search-button")
     }
 
     private var tabs: some View {
@@ -253,21 +237,29 @@ struct ContentView: View {
         .buttonStyle(.plain)
     }
 
+    // every third thumbnail save renders full-bleed (Notes-ref rhythm);
+    // position within the shown list keeps the rule deterministic
+    private var styledEntries: [(item: SavedItem, style: SaveCard.Style)] {
+        var thumbCount = 0
+        return shown.map { item in
+            guard SaveCard.hasLoadableThumbnail(item) else { return (item, .text) }
+            thumbCount += 1
+            return (item, thumbCount % 3 == 0 ? .fullBleed : .inset)
+        }
+    }
+
     private var grid: some View {
-        LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)],
-                  alignment: .leading, spacing: 24) {
-            ForEach(shown) { item in
-                Button { selectedItem = item } label: {
-                    SaveTile(item: item)
-                }
-                .buttonStyle(PressableStyle())
-                .id(item.id)
-                .transition(.opacity.combined(with: .scale(scale: 0.97)))
-                .contextMenu {
-                    Button(role: .destructive) {
-                        withAnimation(.easeOut(duration: 0.25)) { store.remove(item) }
-                    } label: { Label("Remove", systemImage: "trash") }
-                }
+        MasonryGrid(entries: styledEntries) { item, style in
+            Button { selectedItem = item } label: {
+                SaveCard(item: item, style: style)
+            }
+            .buttonStyle(PressableStyle())
+            .id(item.id)
+            .transition(.opacity.combined(with: .scale(scale: 0.97)))
+            .contextMenu {
+                Button(role: .destructive) {
+                    withAnimation(.easeOut(duration: 0.25)) { store.remove(item) }
+                } label: { Label("Remove", systemImage: "trash") }
             }
         }
         // new identity per tab: kills cross-tab move-diffing, so switching
@@ -301,21 +293,34 @@ struct ContentView: View {
             .allowsHitTesting(false)
     }
 
-    private var saveButton: some View {
-        Button { showSaveSheet = true } label: {
-            HStack(spacing: 8) {
-                Image(systemName: "plus")
-                Text("Save a link")
+    // Notes-ref corner chrome: search bottom-left, save bottom-right
+    private var bottomBar: some View {
+        GlassEffectContainer {
+            HStack {
+                Button { showSearch = true } label: {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(.primary)
+                        .frame(width: 52, height: 52)
+                }
+                .glassEffect(.regular.interactive(), in: Circle())
+                .accessibilityIdentifier("search-button")
+                Spacer()
+                Button { showSaveSheet = true } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 19, weight: .semibold))
+                        .foregroundStyle(Color(.systemBackground))
+                        .frame(width: 52, height: 52)
+                }
+                .glassEffect(.regular.tint(.primary.opacity(0.92)).interactive(), in: Circle())
             }
-            .font(.system(size: 17, weight: .semibold))
-            .foregroundStyle(Color(.systemBackground))
-            .padding(.horizontal, 28)
-            .padding(.vertical, 15)
+            .tint(.primary)
         }
-        .glassEffect(.regular.tint(.primary.opacity(0.92)).interactive())
-        .padding(.bottom, 24)
-        .offset(y: saveButtonHidden ? 130 : 0)
-        .animation(.snappy(duration: 0.3, extraBounce: 0), value: saveButtonHidden)
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 20)
+        .padding(.bottom, 8)
+        .offset(y: bottomBarHidden ? 140 : 0)
+        .animation(.snappy(duration: 0.3, extraBounce: 0), value: bottomBarHidden)
     }
 
     private func toastView(_ message: String) -> some View {

@@ -42,7 +42,8 @@ struct SearchSheet: View {
                 }
             }
             .padding(14)
-            .background(Color(.systemGray6), in: RoundedRectangle(cornerRadius: 14))
+            // white field on the gray grouped sheet (gray6 would vanish)
+            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
             .padding(.top, 28)
 
             if results.isEmpty {
@@ -57,16 +58,15 @@ struct SearchSheet: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 ScrollView {
-                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 12),
-                                        GridItem(.flexible(), spacing: 12)],
-                              alignment: .leading, spacing: 24) {
-                        ForEach(results) { item in
-                            Button { selectedItem = item } label: {
-                                SaveTile(item: item)
-                            }
-                            .buttonStyle(PressableStyle())
-                            .accessibilityIdentifier("search-result")
+                    // no full-bleed cards in search — results stay calm
+                    MasonryGrid(entries: results.map {
+                        ($0, SaveCard.hasLoadableThumbnail($0) ? SaveCard.Style.inset : .text)
+                    }) { item, style in
+                        Button { selectedItem = item } label: {
+                            SaveCard(item: item, style: style)
                         }
+                        .buttonStyle(PressableStyle())
+                        .accessibilityIdentifier("search-result")
                     }
                     .padding(.bottom, 40)
                 }
@@ -75,6 +75,7 @@ struct SearchSheet: View {
         }
         .padding(.horizontal, 20)
         .presentationDetents([.large])
+        .presentationBackground(Color(.systemGroupedBackground))
         .presentationCornerRadius(28)
         .presentationDragIndicator(.hidden)
         .overlay(alignment: .top) {
