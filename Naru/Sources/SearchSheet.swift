@@ -61,9 +61,10 @@ struct SearchSheet: View {
                     // no full-bleed cards in search — results stay calm
                     MasonryGrid(entries: results.map {
                         ($0, SaveCard.hasLoadableThumbnail($0) ? SaveCard.Style.inset : .text)
-                    }) { item, style in
+                    }) { item, style, position in
                         Button { selectedItem = item } label: {
-                            SaveCard(item: item, style: style)
+                            SaveCard(item: item, style: style,
+                                     cropNudge: SaveCard.cropNudges[position % 3])
                         }
                         .buttonStyle(PressableStyle())
                         .accessibilityIdentifier("search-result")

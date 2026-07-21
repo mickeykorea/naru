@@ -249,9 +249,10 @@ struct ContentView: View {
     }
 
     private var grid: some View {
-        MasonryGrid(entries: styledEntries) { item, style in
+        MasonryGrid(entries: styledEntries) { item, style, position in
             Button { selectedItem = item } label: {
-                SaveCard(item: item, style: style)
+                SaveCard(item: item, style: style,
+                         cropNudge: SaveCard.cropNudges[position % 3])
             }
             .buttonStyle(PressableStyle())
             .id(item.id)

@@ -73,11 +73,13 @@ No textures, no gradients, no themed palettes.
 - Cards, radius 22, surface secondarySystemGroupedBackground, everything
   inside the card (nothing below it): metadata line (SourceIcon glyph +
   "domain · 2w", 13 gray) → title 17 bold ≤3 lines → then per variant:
-  - Text card: summary preview, Garamond 15 gray, ≤6 lines, padding 16
-  - Inset-image card: glass-slab thumbnail — bleeds to a 5pt inset
-    (radius 17 continuous, concentric with the card's 22), natural aspect
-    clamped w/h 0.75–1.3, 1pt gradient specular rim (white 0.6 topLeading
-    → 0.08 → 0.28 bottomTrailing); text block padded 14
+  - Text card: summary preview, Garamond 15 gray, padding 16; line cap
+    varies 3/5/7 per item (stable id hash) so text cards never tie
+  - Inset-image card: overflowing thumbnail — runs 6pt past each side and
+    out the bottom, cropped by the card's own 22 continuous clip; natural
+    aspect clamped w/h 0.66–1.5 after a crop nudge (0.78/1.0/1.22 cycled
+    by masonry position, so same-ratio sources can't tie heights); text
+    block padded 14
   - Full-bleed card: every 3rd loadable-thumbnail save; edge-to-edge
     image (aspect 0.68–0.95), black 0.55→clear top scrim, white text.
     Not used in the search sheet.
@@ -105,8 +107,8 @@ No textures, no gradients, no themed palettes.
   Both bottom buttons share one GlassEffectContainer. In-sheet buttons
   stay solid black per the Genie reference.
 - Never overlay glassEffect on imagery: `.clear` glass over a thumbnail
-  blurs the whole image milky (tried 2026-07-21, rejected). The iOS 27
-  glass-slab look is hand-built: crisp image + gradient specular stroke.
+  blurs the whole image milky (tried 2026-07-21, rejected). Thumbnails
+  stay crisp; depth comes from the overflow crop, not a material.
 - Status-bar frost: Naru has no nav bar, so `scrollEdgeEffectStyle` won't
   render. Use `VariableBlurView` (Sources/VariableBlur.swift) — a true
   progressive blur (radius 9, 82pt band, quadratic ease-out mask so the
@@ -161,4 +163,5 @@ keep the raw domain. New brands get a name in the same table row.
 | 2026-07-21 | Notes-style masonry adopted: staggered cards, content inside the card, every-3rd full-bleed | Mickey supplied the Apple press shot as the layout reference |
 | 2026-07-21 | Save pill retired → 52pt glass plus bottom-right, search moved to bottom-left, ellipsis alone top-right | Mickey: no big pill when a corner plus works; full reference match chosen |
 | 2026-07-21 | Wash darkened to 0.97→0.93 (dark 0.05→0); cards secondarySystemGroupedBackground | White cards need a gray ground to read as surfaces |
-| 2026-07-21 | Brand short names in metadata; glass-slab inset thumbnails (5pt bleed + specular rim, no glassEffect overlay) | Mickey: "just be spotify"; iOS 27-crop reference; .clear glass over images blurs them |
+| 2026-07-21 | Brand short names in metadata; no glassEffect overlay on imagery | Mickey: "just be spotify"; .clear glass over images blurs them |
+| 2026-07-22 | Inset thumbnails literally overflow the card (6pt sides + bottom, card clips); stagger forced via 3/5/7 preview caps + positional crop nudges | Mickey: "literally overflow"; "the point is not to be listing them uniformly" — id-hash seeding alone let neighbors tie |

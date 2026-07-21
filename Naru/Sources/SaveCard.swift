@@ -7,6 +7,7 @@ struct SaveCard: View {
 
     let item: SavedItem
     let style: Style
+    var cropNudge: CGFloat = 1
 
     var body: some View {
         switch style {
@@ -25,7 +26,7 @@ struct SaveCard: View {
                     .font(.garamond(15, .regular))
                     .foregroundStyle(Color(.systemGray))
                     .lineSpacing(4)
-                    .lineLimit(6)
+                    .lineLimit(Self.previewLineLimit(for: item))
             }
         }
         .padding(16)
@@ -42,14 +43,14 @@ struct SaveCard: View {
             .padding(.horizontal, 14)
             .padding(.top, 14)
             .padding(.bottom, 10)
-            // glass-slab thumbnail: bleeds to a 5pt inset so its radius
-            // runs concentric with the card's 22
-            thumbnail(aspect: Self.clampedAspect(for: item, in: 0.75...1.3), radius: 17)
-                .padding(.horizontal, 5)
-                .padding(.bottom, 5)
+            // literal overflow: the image runs 6pt past each side and out
+            // the bottom; the card's own clip crops it
+            overflowThumbnail(aspect: Self.insetAspect(for: item, nudge: cropNudge))
+                .padding(.horizontal, -6)
         }
         .frame(maxWidth: .infinity, alignment: .topLeading)
         .background(surface)
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
     }
 
     private var fullBleedCard: some View {
@@ -99,6 +100,11 @@ struct SaveCard: View {
     }
 
     private func thumbnail(aspect: CGFloat, radius: CGFloat) -> some View {
+        overflowThumbnail(aspect: aspect)
+            .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
+    }
+
+    private func overflowThumbnail(aspect: CGFloat) -> some View {
         Color.clear
             .aspectRatio(aspect, contentMode: .fit)
             .overlay {
@@ -108,19 +114,22 @@ struct SaveCard: View {
                         .aspectRatio(contentMode: .fill)
                 }
             }
-            .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
-            // glass-slab rim, hand-built: glassEffect(.clear) overlaid on the
-            // image blurs the whole thumbnail (tried, rejected) — a gradient
-            // specular stroke gives the lensed edge and keeps the image crisp
-            .overlay {
-                RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .strokeBorder(
-                        LinearGradient(colors: [.white.opacity(0.6),
-                                                .white.opacity(0.08),
-                                                .white.opacity(0.28)],
-                                       startPoint: .topLeading, endPoint: .bottomTrailing),
-                        lineWidth: 1)
-            }
+            .clipped()
+    }
+
+    // uniform caps flatten the masonry — vary preview depth per item,
+    // stably (UUID hashValue reseeds every launch; sum the string instead)
+    static func previewLineLimit(for item: SavedItem) -> Int {
+        let seed = item.id.uuidString.unicodeScalars.reduce(0) { $0 + Int($1.value) }
+        return [3, 5, 7][seed % 3]
+    }
+
+    // same-ratio sources (stock 3:2 shots) tie card heights — cycle the
+    // fill-crop by masonry position so adjacent image cards always differ
+    static let cropNudges: [CGFloat] = [0.78, 1.0, 1.22]
+
+    static func insetAspect(for item: SavedItem, nudge: CGFloat) -> CGFloat {
+        min(max((aspect(for: item) ?? 1) * nudge, 0.66), 1.5)
     }
 
     // hasThumbnail can lie (file pruned or never written) — style decisions
@@ -151,7 +160,7 @@ struct SaveCard: View {
 // goal, not pixel accuracy.
 struct MasonryGrid<Card: View>: View {
     let entries: [(item: SavedItem, style: SaveCard.Style)]
-    @ViewBuilder let card: (SavedItem, SaveCard.Style) -> Card
+    @ViewBuilder let card: (SavedItem, SaveCard.Style, Int) -> Card
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -163,33 +172,36 @@ struct MasonryGrid<Card: View>: View {
     private func column(_ index: Int) -> some View {
         LazyVStack(spacing: 12) {
             ForEach(columns[index], id: \.item.id) { entry in
-                card(entry.item, entry.style)
+                card(entry.item, entry.style, entry.position)
             }
         }
     }
 
-    private var columns: [[(item: SavedItem, style: SaveCard.Style)]] {
-        var cols: [[(item: SavedItem, style: SaveCard.Style)]] = [[], []]
+    private var columns: [[(position: Int, item: SavedItem, style: SaveCard.Style)]] {
+        var cols: [[(position: Int, item: SavedItem, style: SaveCard.Style)]] = [[], []]
         var heights: [CGFloat] = [0, 0]
-        for entry in entries {
+        for (position, entry) in entries.enumerated() {
             let target = heights[0] <= heights[1] ? 0 : 1
-            cols[target].append(entry)
-            heights[target] += estimatedHeight(entry.item, entry.style) + 12
+            cols[target].append((position, entry.item, entry.style))
+            heights[target] += estimatedHeight(entry.item, entry.style, position) + 12
         }
         return cols
     }
 
-    private func estimatedHeight(_ item: SavedItem, _ style: SaveCard.Style) -> CGFloat {
+    private func estimatedHeight(_ item: SavedItem, _ style: SaveCard.Style, _ position: Int) -> CGFloat {
         let width: CGFloat = 170
         let titleHeight = CGFloat(min(3, item.title.count / 16 + 1)) * 22
         switch style {
         case .fullBleed:
             return width / SaveCard.clampedAspect(for: item, in: 0.68...0.95)
         case .inset:
-            return 28 + 16 + 8 + titleHeight + 8
-                + width / SaveCard.clampedAspect(for: item, in: 0.75...1.3)
+            // overflowing image is 12pt wider than the card
+            return 24 + 16 + 8 + titleHeight
+                + (width + 12) / SaveCard.insetAspect(
+                    for: item, nudge: SaveCard.cropNudges[position % 3])
         case .text:
-            let previewLines = min(6, (item.summary?.count ?? 0) / 20)
+            let previewLines = min(SaveCard.previewLineLimit(for: item),
+                                   (item.summary?.count ?? 0) / 20)
             return 32 + 16 + 8 + titleHeight
                 + (previewLines > 0 ? 8 + CGFloat(previewLines) * 21 : 0)
         }
