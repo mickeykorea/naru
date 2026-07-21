@@ -5,7 +5,7 @@ final class TileTapTests: XCTestCase {
     // that tile, not the right-column neighbor (nearest-button fallthrough)
     func testLeftTileEdgeOpensLeftItem() throws {
         let app = XCUIApplication(bundleIdentifier: "com.mickeyoh.naru")
-        app.launchArguments = ["-naru-uitest-seed", "tile-tap"]
+        app.launchArguments = ["-naru-uitest-seed", "tile-tap-\(UUID().uuidString)"]
         app.launch()
 
         // left tile = "What We Owe Our Libraries"; its button label carries

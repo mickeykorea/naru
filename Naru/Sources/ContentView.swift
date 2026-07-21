@@ -10,8 +10,13 @@ struct ContentView: View {
     @State private var selectedItem: SavedItem? = nil
     @State private var toast: String? = nil
     @State private var bottomBarHidden = false
-    @State private var lastScrollOffset: CGFloat = 0
-    @State private var scrollRun: CGFloat = 0
+    // reference box: these mutate on every scroll tick, and as @State they
+    // invalidated the whole body (masonry included) once per frame
+    private final class ScrollTracker {
+        var lastOffset: CGFloat = 0
+        var run: CGFloat = 0
+    }
+    @State private var scrollTracker = ScrollTracker()
     @State private var pushEdge: Edge = .trailing
     // a horizontal page-swipe never scrolls, so it doesn't cancel tile
     // buttons the way vertical scrolling does — veto their taps instead
@@ -71,23 +76,23 @@ struct ContentView: View {
                     let offset = value.origin.x
                     let minOffset = value.origin.y
                     let maxOffset = value.size.width
-                    let delta = offset - lastScrollOffset
-                    lastScrollOffset = offset
+                    let delta = offset - scrollTracker.lastOffset
+                    scrollTracker.lastOffset = offset
                     if offset <= minOffset + 8 {
-                        bottomBarHidden = false
-                        scrollRun = 0
+                        if bottomBarHidden { bottomBarHidden = false }
+                        scrollTracker.run = 0
                         return
                     }
                     // rubber-band zones produce phantom direction reversals
                     if offset >= maxOffset - 1 { return }
                     // accumulate displacement in the current direction so slow
                     // scrolls still trigger; reset on direction change
-                    if (delta >= 0) != (scrollRun >= 0) { scrollRun = 0 }
-                    scrollRun += delta
-                    if scrollRun > 12 {
-                        bottomBarHidden = true
-                    } else if scrollRun < -12 {
-                        bottomBarHidden = false
+                    if (delta >= 0) != (scrollTracker.run >= 0) { scrollTracker.run = 0 }
+                    scrollTracker.run += delta
+                    if scrollTracker.run > 12 {
+                        if !bottomBarHidden { bottomBarHidden = true }
+                    } else if scrollTracker.run < -12 {
+                        if bottomBarHidden { bottomBarHidden = false }
                     }
                 }
                 // horizontal-dominant swipes page between categories;
@@ -158,13 +163,42 @@ struct ContentView: View {
             if ProcessInfo.processInfo.arguments.contains("-naru-demo-detail") {
                 selectedItem = store.items.first
             }
+            if ProcessInfo.processInfo.arguments.contains("-naru-demo-detail-long"),
+               var demo = store.items.first {
+                demo.summary = String(
+                    repeating: "Public libraries quietly became the last noncommercial "
+                        + "indoor spaces in American life, and their budgets keep shrinking anyway. ",
+                    count: 6)
+                selectedItem = demo
+            }
             if ProcessInfo.processInfo.arguments.contains("-naru-demo-toast") {
                 toast = "Saved to Reading"
             }
             if ProcessInfo.processInfo.arguments.contains("-naru-demo-settings") {
                 showSettings = true
             }
+            // present settings, then flip the stored appearance while it is
+            // open — reproduces the live theme-switch path for verification
+            if ProcessInfo.processInfo.arguments.contains("-naru-demo-theme-flip") {
+                appearanceRaw = Appearance.dark.rawValue   // known start
+                showSettings = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) {
+                    appearanceRaw = Appearance.light.rawValue
+                }
+            }
+            // reproduces the "System" label clipping: switch the picker to
+            // the longest label while the sheet is presented
+            if ProcessInfo.processInfo.arguments.contains("-naru-demo-theme-system") {
+                appearanceRaw = Appearance.dark.rawValue
+                showSettings = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) {
+                    appearanceRaw = Appearance.system.rawValue
+                }
+            }
             if ProcessInfo.processInfo.arguments.contains("-naru-demo-share") {
+                // purge earlier runs' apple.com saves so the share test's
+                // post-share assertion can only match THIS run's item
+                store.mutate { $0.removeAll { $0.domain.contains("apple.com") } }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
                     let activity = UIActivityViewController(
                         activityItems: [URL(string: "https://www.apple.com")!],
@@ -180,12 +214,33 @@ struct ContentView: View {
         // pick up items saved through the share extension while away
         .onChange(of: scenePhase) {
             if scenePhase == .active {
+                applyAppearanceOverride()
                 withAnimation(.easeOut(duration: 0.3)) { store.reload() }
                 Task { await store.upgradeSummaries() }
             }
         }
         .task { await store.upgradeSummaries() }
-        .preferredColorScheme((Appearance(rawValue: appearanceRaw) ?? .system).colorScheme)
+        // theme override rides on the window, not .preferredColorScheme:
+        // a presented sheet doesn't re-inherit the presenter's scheme live,
+        // and preferredColorScheme(nil) won't revert an already-overridden
+        // sheet back to the device. The window trait cascades to every
+        // presentation and .unspecified restores System cleanly.
+        .onAppear { applyAppearanceOverride() }
+        .onChange(of: appearanceRaw) { applyAppearanceOverride() }
+    }
+
+    private func applyAppearanceOverride() {
+        let style: UIUserInterfaceStyle
+        switch Appearance(rawValue: appearanceRaw) ?? .system {
+        case .system: style = .unspecified
+        case .light:  style = .light
+        case .dark:   style = .dark
+        }
+        for scene in UIApplication.shared.connectedScenes {
+            (scene as? UIWindowScene)?.windows.forEach {
+                $0.overrideUserInterfaceStyle = style
+            }
+        }
     }
 
     #if DEBUG
@@ -290,7 +345,7 @@ struct ContentView: View {
                 selectedItem = item
             } label: {
                 SaveCard(item: item, style: style,
-                         cropNudge: SaveCard.cropNudges[position % 3])
+                         cropNudge: SaveCard.cropNudge(at: position))
             }
             .buttonStyle(PressableStyle())
             .id(item.id)
@@ -309,6 +364,7 @@ struct ContentView: View {
                     } label: { Label("Move to", systemImage: "folder") }
                 }
                 Button(role: .destructive) {
+                    SaveCard.invalidateAspect(for: item.id)
                     withAnimation(.easeOut(duration: 0.25)) { store.remove(item) }
                 } label: { Label("Remove", systemImage: "trash") }
             }
@@ -344,9 +400,9 @@ struct ContentView: View {
             .allowsHitTesting(false)
     }
 
-    // theme-matched glass: blends with the wash instead of contrasting —
+    // toast glass blends with the wash instead of contrasting —
     // near-white translucent in light mode, dark grey in dark mode
-    private var savePillTint: Color {
+    private var toastTint: Color {
         colorScheme == .dark
             ? Color(white: 0.16).opacity(0.9)
             : Color.white.opacity(0.45)
@@ -388,7 +444,7 @@ struct ContentView: View {
             .foregroundStyle(.primary)
             .padding(.horizontal, 18)
             .padding(.vertical, 10)
-            .glassEffect(.regular.tint(savePillTint))
+            .glassEffect(.regular.tint(toastTint))
             .padding(.bottom, 92)
             .transition(.move(edge: .bottom).combined(with: .opacity))
     }
@@ -396,6 +452,7 @@ struct ContentView: View {
     private func save(_ item: SavedItem, thumbnail: UIImage?) {
         if let thumbnail, let data = thumbnail.jpegData(compressionQuality: 0.8) {
             try? data.write(to: ArchiveStore.thumbnailURL(for: item.id))
+            SaveCard.invalidateAspect(for: item.id)
         }
         UIImpactFeedbackGenerator(style: .soft).impactOccurred()
         withAnimation(.easeOut(duration: 0.3)) { store.add(item) }

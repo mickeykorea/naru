@@ -88,25 +88,21 @@ struct SettingsSheet: View {
                     Text("Settings")
                         .font(.system(size: 17, weight: .semibold))
                 }
+                // iOS 26 gives toolbar buttons their own Liquid Glass
+                // background — no manual .glassEffect (that double-rings)
                 ToolbarItem(placement: .topBarLeading) {
                     Button { dismiss() } label: {
                         Image(systemName: "xmark")
                             .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(.primary)
-                            .frame(width: 30, height: 30)
                     }
                     .tint(.primary)
-                    .glassEffect(.regular.interactive(), in: Circle())
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     ShareLink(item: shareURL, message: Text(shareMessage)) {
                         Image(systemName: "square.and.arrow.up")
                             .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(.primary)
-                            .frame(width: 30, height: 30)
                     }
                     .tint(.primary)
-                    .glassEffect(.regular.interactive(), in: Circle())
                 }
             }
             .toolbarBackground(.hidden, for: .navigationBar)
@@ -145,9 +141,15 @@ struct SettingsSheet: View {
                 HStack(spacing: 5) {
                     Text(selection.wrappedValue.label)
                         .font(.system(size: 16))
+                        // claim full width so the longest label ("System")
+                        // never truncates while the theme change reflows
+                        .fixedSize()
                     Image(systemName: "chevron.up.chevron.down")
                         .font(.system(size: 12, weight: .semibold))
                 }
+                // snap the label width on selection change instead of letting
+                // it animate up from the shorter value (which clips "System")
+                .animation(nil, value: selection.wrappedValue)
                 .foregroundStyle(Color(.systemGray))
             }
             .tint(.primary)

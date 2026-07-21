@@ -71,7 +71,7 @@ struct SearchSheet: View {
                     }) { item, style, position in
                         Button { selectedItem = item } label: {
                             SaveCard(item: item, style: style,
-                                     cropNudge: SaveCard.cropNudges[position % 3])
+                                     cropNudge: SaveCard.cropNudge(at: position))
                         }
                         .buttonStyle(PressableStyle())
                         .accessibilityIdentifier("search-result")

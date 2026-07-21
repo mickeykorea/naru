@@ -33,6 +33,16 @@ struct ItemDetailSheet: View {
         return UIImage(contentsOfFile: ArchiveStore.thumbnailURL(for: item.id).path)
     }
 
+    private var heroShield: some View {
+        #if DEBUG
+        Color(.systemBackground)
+            .accessibilityElement()
+            .accessibilityIdentifier("detail-hero")
+        #else
+        Color(.systemBackground)
+        #endif
+    }
+
     var body: some View {
         GeometryReader { geo in
             let aspect: CGFloat = heroImage != nil ? 1.05 : 1.6
@@ -41,6 +51,10 @@ struct ItemDetailSheet: View {
             // distance until it hits the floor, so its bottom edge and the
             // content stay glued together through the collapse
             let heroHeight = max(minHeroHeight, fullHero - max(0, scrollY))
+            // after the hero bottoms out at its floor, stop pinning it: lift
+            // it by the distance scrolled past the collapse so it rides up
+            // with the content instead of the text sliding underneath
+            let heroLift = -max(0, scrollY - (fullHero - minHeroHeight))
 
             ScrollView {
                 content
@@ -62,15 +76,14 @@ struct ItemDetailSheet: View {
                     .padding(.top, heroTopInset)
                     .frame(maxWidth: .infinity)
                     // opaque shield: content scrolls under the pinned hero.
-                    // it also carries the test identifier — the image stack
-                    // reports a11y frames as the union of children, and the
-                    // fill image overflows its clip, so portrait heroes
-                    // would measure at a fixed, wrong height
-                    .background(
-                        Color(.systemBackground)
-                            .accessibilityElement()
-                            .accessibilityIdentifier("detail-hero")
-                    )
+                    // In DEBUG it also carries the test identifier — the
+                    // image stack reports a11y frames as the union of
+                    // children, and the fill image overflows its clip, so
+                    // portrait heroes measure at a fixed, wrong height.
+                    // Release builds skip it: it would be an unlabeled
+                    // VoiceOver stop.
+                    .background(heroShield)
+                    .offset(y: heroLift)
             }
         }
         .presentationDetents([.medium, .large], selection: $detent)
@@ -196,6 +209,7 @@ struct ItemDetailSheet: View {
                     .font(.garamond(17))
                     .lineLimit(1...6)
                     .submitLabel(.done)
+                    .accessibilityIdentifier("detail-note")
                     .onChange(of: note) { onNoteChange(note) }
             }
             .frame(maxWidth: .infinity, alignment: .leading)

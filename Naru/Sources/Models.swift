@@ -43,7 +43,11 @@ final class ArchiveStore: ObservableObject {
 
     #if DEBUG
     // "-naru-uitest-seed <id>" redirects storage to a parallel key and
-    // thumbnail directory so UI tests never touch the real archive
+    // thumbnail directory so seeded UI tests never touch the real archive.
+    // Exception by design: the share-extension E2E test — the extension is
+    // a separate process that never sees launch arguments, so it always
+    // writes the real key (its test purges its own residue via
+    // -naru-demo-share instead).
     static var uiTestSeedID: String? {
         let args = ProcessInfo.processInfo.arguments
         guard let index = args.firstIndex(of: "-naru-uitest-seed"),

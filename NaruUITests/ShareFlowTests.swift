@@ -64,7 +64,7 @@ final class CategoryPagingTests: XCTestCase {
 
     func testSwipePagesBetweenCategories() throws {
         let app = XCUIApplication(bundleIdentifier: "com.mickeyoh.naru")
-        app.launchArguments = ["-naru-uitest-seed", "paging"]
+        app.launchArguments = ["-naru-uitest-seed", "paging-\(UUID().uuidString)"]
         app.launch()
 
         let scroll = app.scrollViews.firstMatch
@@ -133,7 +133,7 @@ final class HeroCollapseTests: XCTestCase {
     func testHeroShrinksWithScrollAndFloors() throws {
         let app = XCUIApplication(bundleIdentifier: "com.mickeyoh.naru")
         app.launchArguments = ["-naru-demo-detail", "-naru-demo-large",
-                               "-naru-uitest-seed", "hero"]
+                               "-naru-uitest-seed", "hero-\(UUID().uuidString)"]
         app.launch()
 
         let hero = app.descendants(matching: .any)
@@ -170,7 +170,7 @@ final class SearchTests: XCTestCase {
 
     func testSearchFiltersAcrossFields() throws {
         let app = XCUIApplication(bundleIdentifier: "com.mickeyoh.naru")
-        app.launchArguments = ["-naru-uitest-seed", "search"]
+        app.launchArguments = ["-naru-uitest-seed", "search-\(UUID().uuidString)"]
         app.launch()
 
         let button = app.buttons["search-button"]

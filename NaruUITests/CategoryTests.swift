@@ -25,7 +25,7 @@ final class CategoryChangeTests: XCTestCase {
 
     func testContextMenuHasMoveTo() throws {
         let app = XCUIApplication(bundleIdentifier: "com.mickeyoh.naru")
-        app.launchArguments = ["-naru-uitest-seed", "category-move"]
+        app.launchArguments = ["-naru-uitest-seed", "category-move-\(UUID().uuidString)"]
         app.launch()
         let tile = app.staticTexts["Apple"].firstMatch
         XCTAssertTrue(tile.waitForExistence(timeout: 8))

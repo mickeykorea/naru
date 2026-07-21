@@ -1,3 +1,4 @@
+import ImageIO
 import SwiftUI
 
 // Notes-style masonry card. Everything renders inside the surface —
@@ -65,7 +66,7 @@ struct SaveCard: View {
     }
 
     private var fullBleedCard: some View {
-        thumbnail(aspect: Self.clampedAspect(for: item, in: 0.68...0.95), radius: 22)
+        thumbnail(aspect: Self.clampedAspect(for: item, in: Self.fullBleedAspectRange), radius: 22)
             .overlay(
                 // legibility scrim under the overlaid text, fading out by mid-card
                 LinearGradient(colors: [.black.opacity(0.55), .black.opacity(0)],
@@ -98,11 +99,13 @@ struct SaveCard: View {
         }
     }
 
-    // "2w", "3d" — full relative phrases truncate beside long domains
-    // in half-width cards
+    // "2w", "3d" — full relative phrases truncate beside long domains in
+    // half-width cards. Pinned to en_US: the suffix strip is English-only
+    // and all app copy is unlocalized English anyway.
     static func shortAge(_ date: Date) -> String {
-        date.formatted(.relative(presentation: .numeric, unitsStyle: .narrow))
-            .replacingOccurrences(of: " ago", with: "")
+        var style = Date.RelativeFormatStyle(presentation: .numeric, unitsStyle: .narrow)
+        style.locale = Locale(identifier: "en_US")
+        return date.formatted(style).replacingOccurrences(of: " ago", with: "")
     }
 
     private var surface: some View {
@@ -139,6 +142,12 @@ struct SaveCard: View {
     // fill-crop by masonry position so adjacent image cards always differ
     static let cropNudges: [CGFloat] = [0.78, 1.0, 1.22]
 
+    static func cropNudge(at position: Int) -> CGFloat {
+        cropNudges[position % cropNudges.count]
+    }
+
+    static let fullBleedAspectRange: ClosedRange<CGFloat> = 0.68...0.95
+
     static func insetAspect(for item: SavedItem, nudge: CGFloat) -> CGFloat {
         min(max((aspect(for: item) ?? 1) * nudge, 0.66), 1.5)
     }
@@ -149,14 +158,28 @@ struct SaveCard: View {
         item.hasThumbnail && aspect(for: item) != nil
     }
 
-    // Thumbnail aspect (w/h), read once from the stored JPEG
+    // Thumbnail aspect (w/h) from the JPEG header only — no bitmap decode.
+    // 0 is the known-missing sentinel: without it, every item whose file is
+    // absent would re-hit the filesystem on each body evaluation.
     private static var aspectCache: [UUID: CGFloat] = [:]
 
+    static func invalidateAspect(for id: UUID) {
+        aspectCache[id] = nil
+    }
+
     private static func aspect(for item: SavedItem) -> CGFloat? {
-        if let cached = aspectCache[item.id] { return cached }
-        guard let image = UIImage(contentsOfFile: ArchiveStore.thumbnailURL(for: item.id).path),
-              image.size.height > 0 else { return nil }
-        let aspect = image.size.width / image.size.height
+        if let cached = aspectCache[item.id] { return cached == 0 ? nil : cached }
+        let url = ArchiveStore.thumbnailURL(for: item.id)
+        guard let source = CGImageSourceCreateWithURL(url as CFURL,
+                  [kCGImageSourceShouldCache: false] as CFDictionary),
+              let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
+              let width = props[kCGImagePropertyPixelWidth] as? CGFloat,
+              let height = props[kCGImagePropertyPixelHeight] as? CGFloat,
+              height > 0 else {
+            aspectCache[item.id] = 0
+            return nil
+        }
+        let aspect = width / height
         aspectCache[item.id] = aspect
         return aspect
     }
@@ -174,18 +197,24 @@ struct MasonryGrid<Card: View>: View {
     @ViewBuilder let card: (SavedItem, SaveCard.Style, Int) -> Card
 
     var body: some View {
+        // computed once — evaluating `columns` per column ran the O(n)
+        // balance loop twice on every body evaluation
+        let cols = columns
         HStack(alignment: .top, spacing: 12) {
-            column(0)
-            column(1)
+            column(cols[0])
+            column(cols[1])
         }
     }
 
-    private func column(_ index: Int) -> some View {
+    private func column(_ entries: [(position: Int, item: SavedItem, style: SaveCard.Style)]) -> some View {
         LazyVStack(spacing: 12) {
-            ForEach(columns[index], id: \.item.id) { entry in
+            ForEach(entries, id: \.item.id) { entry in
                 card(entry.item, entry.style, entry.position)
             }
         }
+        // equal share even when empty: an unframed empty column collapses
+        // and the other stretches its cards across the full width
+        .frame(maxWidth: .infinity)
     }
 
     private var columns: [[(position: Int, item: SavedItem, style: SaveCard.Style)]] {
@@ -204,12 +233,12 @@ struct MasonryGrid<Card: View>: View {
         let titleHeight = CGFloat(min(3, item.title.count / 16 + 1)) * 22
         switch style {
         case .fullBleed:
-            return width / SaveCard.clampedAspect(for: item, in: 0.68...0.95)
+            return width / SaveCard.clampedAspect(for: item, in: SaveCard.fullBleedAspectRange)
         case .inset:
             // image is 24pt narrower than the card; 20pt of it is cut off
             return 24 + 16 + 8 + titleHeight - 20
                 + (width - 24) / SaveCard.insetAspect(
-                    for: item, nudge: SaveCard.cropNudges[position % 3])
+                    for: item, nudge: SaveCard.cropNudge(at: position))
         case .text:
             let previewLines = min(SaveCard.previewLineLimit(for: item),
                                    (item.summary?.count ?? 0) / 20)
@@ -223,33 +252,43 @@ struct SourceIcon: View {
     let domain: String
     var tint: Color = Color(.systemGray)
 
-    private static let brands: [(match: String, asset: String, name: String)] = [
-        ("x.com", "brand-x", "x"), ("twitter", "brand-x", "x"),
-        ("instagram", "brand-instagram", "instagram"), ("notion", "brand-notion", "notion"),
-        ("spotify", "brand-spotify", "spotify"),
-        ("youtube", "brand-youtube", "youtube"), ("youtu.be", "brand-youtube", "youtube"),
-        ("reddit", "brand-reddit", "reddit"),
-        ("pinterest", "brand-pinterest", "pinterest"), ("tiktok", "brand-tiktok", "tiktok"),
-        ("github", "brand-github", "github"), ("medium.com", "brand-medium", "medium"),
-        ("substack", "brand-substack", "substack"), ("netflix", "brand-netflix", "netflix"),
-        ("figma", "brand-figma", "figma"), ("facebook", "brand-facebook", "facebook"),
-        ("threads", "brand-threads", "threads"), ("t.me", "brand-telegram", "telegram"),
-        ("telegram", "brand-telegram", "telegram"), ("whatsapp", "brand-whatsapp", "whatsapp"),
-        ("twitch", "brand-twitch", "twitch"), ("soundcloud", "brand-soundcloud", "soundcloud"),
-        ("apple.com", "brand-apple", "apple"), ("google", "brand-google", "google"),
-        ("naver", "brand-naver", "naver"), ("kakao", "brand-kakaotalk", "kakao"),
-        ("nytimes", "brand-newyorktimes", "nytimes"), ("dribbble", "brand-dribbble", "dribbble"),
-        ("behance", "brand-behance", "behance"), ("vimeo", "brand-vimeo", "vimeo"),
+    // registrable domains only — matched host == domain or host ends in
+    // ".domain". Substring matching let fakeapple.com wear Apple's icon and
+    // name while the real domain went unshown (spoofing surface).
+    private static let brands: [(domain: String, asset: String, name: String)] = [
+        ("x.com", "brand-x", "x"), ("twitter.com", "brand-x", "x"),
+        ("instagram.com", "brand-instagram", "instagram"),
+        ("notion.so", "brand-notion", "notion"), ("notion.site", "brand-notion", "notion"),
+        ("spotify.com", "brand-spotify", "spotify"),
+        ("youtube.com", "brand-youtube", "youtube"), ("youtu.be", "brand-youtube", "youtube"),
+        ("reddit.com", "brand-reddit", "reddit"),
+        ("pinterest.com", "brand-pinterest", "pinterest"), ("tiktok.com", "brand-tiktok", "tiktok"),
+        ("github.com", "brand-github", "github"), ("medium.com", "brand-medium", "medium"),
+        ("substack.com", "brand-substack", "substack"), ("netflix.com", "brand-netflix", "netflix"),
+        ("figma.com", "brand-figma", "figma"), ("facebook.com", "brand-facebook", "facebook"),
+        ("threads.net", "brand-threads", "threads"), ("threads.com", "brand-threads", "threads"),
+        ("t.me", "brand-telegram", "telegram"), ("telegram.org", "brand-telegram", "telegram"),
+        ("whatsapp.com", "brand-whatsapp", "whatsapp"),
+        ("twitch.tv", "brand-twitch", "twitch"), ("soundcloud.com", "brand-soundcloud", "soundcloud"),
+        ("apple.com", "brand-apple", "apple"), ("google.com", "brand-google", "google"),
+        ("naver.com", "brand-naver", "naver"), ("kakao.com", "brand-kakaotalk", "kakao"),
+        ("nytimes.com", "brand-newyorktimes", "nytimes"), ("dribbble.com", "brand-dribbble", "dribbble"),
+        ("behance.net", "brand-behance", "behance"), ("vimeo.com", "brand-vimeo", "vimeo"),
     ]
+
+    static func brand(for domain: String) -> (domain: String, asset: String, name: String)? {
+        let host = domain.lowercased()
+        return brands.first { host == $0.domain || host.hasSuffix("." + $0.domain) }
+    }
 
     // known brands read by name; random weblinks keep their raw domain
     static func displayName(for domain: String) -> String {
-        brands.first(where: { domain.contains($0.match) })?.name ?? domain
+        brand(for: domain)?.name ?? domain
     }
 
     var body: some View {
         Group {
-            if let asset = Self.brands.first(where: { domain.contains($0.match) })?.asset {
+            if let asset = Self.brand(for: domain)?.asset {
                 Image(asset)
                     .resizable()
                     .renderingMode(.template)

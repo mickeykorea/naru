@@ -59,32 +59,44 @@ extension ArchiveStore {
                       title: "Jeju Cassette, Side B — Night Drive Mix",
                       category: "Music",
                       savedAt: Date().addingTimeInterval(-15 * day),
-                      hasThumbnail: false,
+                      hasThumbnail: true,
                       summary: "Coastal road playlist: city pop, tape hiss, "
                           + "and one song that only makes sense after midnight.",
                       summaryUpgraded: true),
+            // third loadable thumbnail — renders full-bleed on the All tab
             SavedItem(id: UUID(), url: "https://www.youtube.com/watch?v=deepsea",
                       title: "The deep sea is darker than you think",
                       category: "Watch",
                       savedAt: Date().addingTimeInterval(-20 * day),
-                      hasThumbnail: false,
+                      hasThumbnail: true,
                       summary: "Below 1,000 meters, sunlight gives up "
                           + "entirely. This documentary follows the creatures "
                           + "that never see it.",
                       summaryUpgraded: true),
+            // claims a thumbnail that was never written — must fall back to
+            // a text card (the hasLoadableThumbnail negative path)
+            SavedItem(id: UUID(), url: "https://blog.example.net/desk",
+                      title: "Analog Desk Tour", category: "Reading",
+                      savedAt: Date().addingTimeInterval(-25 * day),
+                      hasThumbnail: true,
+                      summary: "The file for this save vanished, which is "
+                          + "exactly the point.",
+                      summaryUpgraded: true),
         ]
 
-        writeThumbnail(for: items[0].id)
-        if let data = try? JSONEncoder().encode(items) {
-            defaults.set(data, forKey: key)
-        }
+        writeThumbnail(for: items[0].id, size: CGSize(width: 840, height: 1120))
+        writeThumbnail(for: items[3].id, size: CGSize(width: 1000, height: 1000))
+        writeThumbnail(for: items[4].id, size: CGSize(width: 1280, height: 800))
+        // marker only after a successful write — setting it on a failed
+        // encode would leave a wiped archive that never reseeds
+        guard let data = try? JSONEncoder().encode(items) else { return }
+        defaults.set(data, forKey: key)
         defaults.set(seedID, forKey: seedMarkerKey)
     }
 
     // a generated gradient stands in for a real og:image — the tests only
-    // need a decodable JPEG with a stable portrait aspect
-    private static func writeThumbnail(for id: UUID) {
-        let size = CGSize(width: 840, height: 1120)
+    // need decodable JPEGs with stable, distinct aspects
+    private static func writeThumbnail(for id: UUID, size: CGSize) {
         let image = UIGraphicsImageRenderer(size: size).image { ctx in
             let colors = [UIColor(white: 0.35, alpha: 1).cgColor,
                           UIColor(white: 0.75, alpha: 1).cgColor]
