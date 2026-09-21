@@ -34,3 +34,10 @@ context-log.md
 # Docs kept local (IP) — README stays public
 *.md
 !/README.md
+
+# Third-party skills pulled in by `npx skills add` (tooling, not project code)
+.agents/
+.claude/skills/*
+!.claude/skills/animation-vocabulary/
+!.claude/skills/emil-design-eng/
+!.claude/skills/review-animations/
