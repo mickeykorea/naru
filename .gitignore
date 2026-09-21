@@ -43,3 +43,7 @@ context-log.md
 !.claude/skills/animation-vocabulary/
 !.claude/skills/emil-design-eng/
 !.claude/skills/review-animations/
+
+# Local agent hooks and scratch references, not project code
+.codex/
+reference.jpg
