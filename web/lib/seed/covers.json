@@ -1,0 +1,492 @@
+[
+  {
+    "file": "/mock/covers/0.jpg",
+    "album": "Westside Whimsy",
+    "artist": "Jhené Aiko",
+    "genre": "R&B/Soul",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/1.jpg",
+    "album": "Don't Look Down",
+    "artist": "Rod Wave",
+    "genre": "Hip-Hop/Rap",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/2.jpg",
+    "album": "ICEMAN",
+    "artist": "Drake",
+    "genre": "Hip-Hop/Rap",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/3.jpg",
+    "album": "you seem pretty sad for a girl so in love",
+    "artist": "Olivia Rodrigo",
+    "genre": "Pop",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/4.jpg",
+    "album": "NO ME ARREPIENTO DE SENTIR TANTO",
+    "artist": "KAROL G",
+    "genre": "Latin",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/5.jpg",
+    "album": "That's Just Me",
+    "artist": "Riley Green",
+    "genre": "Country",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/6.jpg",
+    "album": "COCOON",
+    "artist": "Yeat",
+    "genre": "Hip-Hop/Rap",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/7.jpg",
+    "album": "HABIBTI",
+    "artist": "Drake",
+    "genre": "R&B/Soul",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/8.jpg",
+    "album": "BIGGER THAN THE DEVIL",
+    "artist": "EST Gee",
+    "genre": "Hip-Hop/Rap",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/9.jpg",
+    "album": "All Eyes on Shiest",
+    "artist": "Pooh Shiesty",
+    "genre": "Hip-Hop/Rap",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/10.jpg",
+    "album": "I Quit Rap",
+    "artist": "Hunxho",
+    "genre": "Hip-Hop/Rap",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/11.jpg",
+    "album": "The Great Divide: The Last Of The Bugs",
+    "artist": "Noah Kahan",
+    "genre": "Alternative",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/12.jpg",
+    "album": "Bass Persuades",
+    "artist": "Miley Cyrus",
+    "genre": "Pop",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/13.jpg",
+    "album": "PRIMA",
+    "artist": "ADÉLA",
+    "genre": "Pop",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/14.jpg",
+    "album": "petal",
+    "artist": "Ariana Grande",
+    "genre": "Pop",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/15.jpg",
+    "album": "No Rest for The Wicked",
+    "artist": "AZ Chike",
+    "genre": "Hip-Hop/Rap",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/16.jpg",
+    "album": "I’m The Problem",
+    "artist": "Morgan Wallen",
+    "genre": "Country",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/17.jpg",
+    "album": "Angel",
+    "artist": "Lizzy McAlpine",
+    "genre": "Alternative",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/18.jpg",
+    "album": "Brown Noise: Loops for Relaxation, Deep Sleep, Meditation, And Babies",
+    "artist": "SleepTherapy",
+    "genre": "Music",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/19.jpg",
+    "album": "Rain Sounds For Sleep",
+    "artist": "Silent Chills",
+    "genre": "Music",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/20.jpg",
+    "album": "SWAGUU",
+    "artist": "Seyi Vibez",
+    "genre": "Music",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/21.jpg",
+    "album": "Dandelion",
+    "artist": "Ella Langley",
+    "genre": "Country",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/22.jpg",
+    "album": "OCTANE",
+    "artist": "Don Toliver",
+    "genre": "Hip-Hop/Rap",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/23.jpg",
+    "album": "The Real Me",
+    "artist": "Future",
+    "genre": "Hip-Hop/Rap",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/24.jpg",
+    "album": "S.K.A.T.E.",
+    "artist": "Rylo Rodriguez",
+    "genre": "Hip-Hop/Rap",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/25.jpg",
+    "album": "The Art of Loving",
+    "artist": "Olivia Dean",
+    "genre": "Pop",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/26.jpg",
+    "album": "Smaxk Season 3: Banks House",
+    "artist": "Fatt Smaxk",
+    "genre": "Hip-Hop/Rap",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/27.jpg",
+    "album": "Oh yeah?",
+    "artist": "Steve Lacy",
+    "genre": "Alternative",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/28.jpg",
+    "album": "Take Care",
+    "artist": "Drake",
+    "genre": "Hip-Hop/Rap",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/29.jpg",
+    "album": "Pylon",
+    "artist": "beabadoobee",
+    "genre": "Rock",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/30.jpg",
+    "album": "MAID OF HONOUR",
+    "artist": "Drake",
+    "genre": "Hip-Hop/Rap",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/31.jpg",
+    "album": "The Life of a Showgirl",
+    "artist": "Taylor Swift",
+    "genre": "Pop",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/32.jpg",
+    "album": "EL GREEN PRINT: La Saga (Disc 2) - EL CLUB DE LAS 19 FLORES",
+    "artist": "Feid",
+    "genre": "Latin",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/33.jpg",
+    "album": "DeBÍ TiRAR MáS FOToS",
+    "artist": "Bad Bunny",
+    "genre": "Latin",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/34.jpg",
+    "album": "$ome $exy $ongs 4 U",
+    "artist": "PARTYNEXTDOOR & Drake",
+    "genre": "R&B/Soul",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/35.jpg",
+    "album": "The World Is Yours",
+    "artist": "Rio Da Yung Og",
+    "genre": "Hip-Hop/Rap",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/36.jpg",
+    "album": "One Thing At A Time",
+    "artist": "Morgan Wallen",
+    "genre": "Country",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/37.jpg",
+    "album": "Kiss All The Time. Disco, Occasionally.",
+    "artist": "Harry Styles",
+    "genre": "Pop",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/38.jpg",
+    "album": "Big Mama",
+    "artist": "Latto",
+    "genre": "Hip-Hop/Rap",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/39.jpg",
+    "album": "POR SI MAÑANA NO ESTOY",
+    "artist": "Omar Courtz",
+    "genre": "Latin",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/40.jpg",
+    "album": "Visitor",
+    "artist": "SIENNA SPIRO",
+    "genre": "Pop",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/41.jpg",
+    "album": "Certified Lover Boy",
+    "artist": "Drake",
+    "genre": "Hip-Hop/Rap",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/42.jpg",
+    "album": "I NEVER LIKED YOU",
+    "artist": "Future",
+    "genre": "Hip-Hop/Rap",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/43.jpg",
+    "album": "Pretty Girlz Run The World",
+    "artist": "Loe Shimmy",
+    "genre": "Hip-Hop/Rap",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/44.jpg",
+    "album": "Graduation",
+    "artist": "Kanye West",
+    "genre": "Hip-Hop/Rap",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/45.jpg",
+    "album": "7220",
+    "artist": "Lil Durk",
+    "genre": "Hip-Hop/Rap",
+    "region": "us"
+  },
+  {
+    "file": "/mock/covers/46.jpg",
+    "album": "To Fall Asleep To",
+    "artist": "Rain Sounds",
+    "genre": "Worldwide",
+    "region": "gb"
+  },
+  {
+    "file": "/mock/covers/47.jpg",
+    "album": "Ride Lonesome",
+    "artist": "Beck",
+    "genre": "Alternative",
+    "region": "gb"
+  },
+  {
+    "file": "/mock/covers/48.jpg",
+    "album": "WILDCHILD",
+    "artist": "Alex Warren",
+    "genre": "Pop",
+    "region": "gb"
+  },
+  {
+    "file": "/mock/covers/49.jpg",
+    "album": "WORLDWIDE WAVE",
+    "artist": "D-Block Europe & French Montana",
+    "genre": "Hip-Hop/Rap",
+    "region": "gb"
+  },
+  {
+    "file": "/mock/covers/50.jpg",
+    "album": "(What's the Story) Morning Glory?",
+    "artist": "Oasis",
+    "genre": "Alternative",
+    "region": "gb"
+  },
+  {
+    "file": "/mock/covers/51.jpg",
+    "album": "Lost Weekend",
+    "artist": "Phoebe Bridgers",
+    "genre": "Alternative",
+    "region": "gb"
+  },
+  {
+    "file": "/mock/covers/52.jpg",
+    "album": "ESTRUS",
+    "artist": "Tove Lo",
+    "genre": "Pop",
+    "region": "gb"
+  },
+  {
+    "file": "/mock/covers/53.jpg",
+    "album": "Day and Night",
+    "artist": "Carly Rae Jepsen",
+    "genre": "Pop",
+    "region": "gb"
+  },
+  {
+    "file": "/mock/covers/54.jpg",
+    "album": "Distance in Static",
+    "artist": "Bonobo",
+    "genre": "Electronic",
+    "region": "gb"
+  },
+  {
+    "file": "/mock/covers/55.jpg",
+    "album": "Man’s Best Friend",
+    "artist": "Sabrina Carpenter",
+    "genre": "Pop",
+    "region": "gb"
+  },
+  {
+    "file": "/mock/covers/56.jpg",
+    "album": "Music, Fashion, Film",
+    "artist": "Charli xcx",
+    "genre": "Pop",
+    "region": "gb"
+  },
+  {
+    "file": "/mock/covers/57.jpg",
+    "album": "Rumours",
+    "artist": "Fleetwood Mac",
+    "genre": "Rock",
+    "region": "gb"
+  },
+  {
+    "file": "/mock/covers/58.jpg",
+    "album": "CONFESSIONS II: Afterhours Edition",
+    "artist": "Madonna",
+    "genre": "Pop",
+    "region": "gb"
+  },
+  {
+    "file": "/mock/covers/59.jpg",
+    "album": "Definitely Maybe",
+    "artist": "Oasis",
+    "genre": "Alternative",
+    "region": "gb"
+  },
+  {
+    "file": "/mock/covers/60.jpg",
+    "album": "Sunshine",
+    "artist": "Jungle",
+    "genre": "Pop",
+    "region": "gb"
+  },
+  {
+    "file": "/mock/covers/61.jpg",
+    "album": "Thriller",
+    "artist": "Michael Jackson",
+    "genre": "Pop",
+    "region": "gb"
+  },
+  {
+    "file": "/mock/covers/62.jpg",
+    "album": "÷",
+    "artist": "Ed Sheeran",
+    "genre": "Pop",
+    "region": "gb"
+  },
+  {
+    "file": "/mock/covers/63.jpg",
+    "album": "Romance",
+    "artist": "Fontaines D.C.",
+    "genre": "Alternative",
+    "region": "gb"
+  },
+  {
+    "file": "/mock/covers/64.jpg",
+    "album": "AM",
+    "artist": "Arctic Monkeys",
+    "genre": "Alternative",
+    "region": "gb"
+  },
+  {
+    "file": "/mock/covers/65.jpg",
+    "album": "Daughter from Hell",
+    "artist": "Gracie Abrams",
+    "genre": "Pop",
+    "region": "gb"
+  },
+  {
+    "file": "/mock/covers/66.jpg",
+    "album": "Here Because of Hope",
+    "artist": "Ezra Collective",
+    "genre": "Jazz",
+    "region": "gb"
+  },
+  {
+    "file": "/mock/covers/67.jpg",
+    "album": "Stick Season (Forever)",
+    "artist": "Noah Kahan",
+    "genre": "Alternative",
+    "region": "gb"
+  },
+  {
+    "file": "/mock/covers/68.jpg",
+    "album": "THIS MUSIC MAY CONTAIN HOPE.",
+    "artist": "RAYE",
+    "genre": "Pop",
+    "region": "gb"
+  },
+  {
+    "file": "/mock/covers/69.jpg",
+    "album": "SOUR (Video Version)",
+    "artist": "Olivia Rodrigo",
+    "genre": "Pop",
+    "region": "gb"
+  }
+]
