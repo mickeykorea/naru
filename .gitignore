@@ -31,9 +31,11 @@ fastlane/test_output/
 .claude/worktrees/
 context-log.md
 
-# Docs kept local (IP) — README stays public
+# Docs kept local (IP) — README and the legacy folder stay public
 *.md
 !/README.md
+!/legacy/
+!/legacy/*.md
 
 # Third-party skills pulled in by `npx skills add` (tooling, not project code)
 .agents/
