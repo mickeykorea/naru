@@ -1,0 +1,103 @@
+/* Lab-only styles: the variant switcher and the parked A/B variants.
+   The real space styles live in components/space/space.css. */
+@import '../../../components/space/space.css';
+
+/* ---------- switcher (not part of the design being judged) ---------- */
+.switcher {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: #ff3b30;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+.switcher button { width: 32px; height: 32px; border-radius: 50%; }
+.switcher button:hover { background: rgba(255, 255, 255, 0.18); }
+.switcher span { padding: 0 8px; white-space: nowrap; }
+
+/* ---------- variant B: canvas ---------- */
+.canvas { position: fixed; inset: 0; background: var(--p-ground); }
+.canvas .react-flow__node { font-family: inherit; }
+.canvas .react-flow__edge-path { stroke: var(--p-faint); stroke-width: 1.5; }
+.canvas .react-flow__edge-textbg { fill: var(--p-ground); }
+.canvas .react-flow__edge-text { fill: var(--p-ink-3); font-size: 12px; }
+.canvas .react-flow__controls { box-shadow: none; border-radius: 8px; overflow: hidden; }
+.canvas .react-flow__controls button { background: var(--p-surface); border-bottom: 1px solid var(--p-line); fill: var(--p-ink-2); }
+
+.theme-node {
+  width: 100%;
+  height: 100%;
+  border-radius: 16px;
+  background: var(--p-surface);
+  padding: 16px;
+}
+.theme-node .head { display: flex; align-items: baseline; gap: 8px; cursor: pointer; }
+.theme-node .name { font-weight: 500; }
+.theme-node .n { font-size: 12px; color: var(--p-muted); }
+.theme-node .line { font-size: 15px; line-height: 20px; color: var(--p-ink-3); margin-top: 2px; }
+.theme-node.active { outline: 1.5px solid var(--p-ink); }
+
+.save-node {
+  width: 152px;
+  border-radius: 12px;
+  background: var(--p-ground);
+  padding: 10px;
+  transition: opacity 200ms var(--p-ease);
+  position: relative;
+}
+.save-node .m { display: flex; align-items: center; gap: 6px; font-size: 11px; line-height: 16px; color: var(--p-muted); margin-bottom: 4px; }
+.save-node .t { font-size: 13px; line-height: 18px; font-weight: 500; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.save-node .thumb { margin-top: 8px; border-radius: 8px; }
+.save-node.dim { opacity: 0.25; }
+.save-node .badge { position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: var(--p-ink); color: var(--p-on-ink); font-size: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
+.save-node .add { position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: var(--p-surface-2); color: var(--p-ink-2); font-size: 12px; display: none; align-items: center; justify-content: center; }
+.save-node:hover .add { display: flex; }
+
+.panel {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  bottom: 16px;
+  width: 360px;
+  z-index: 10;
+  border-radius: 16px;
+  background: var(--p-surface);
+  padding: 20px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.panel h2 { font-size: 17px; line-height: 24px; font-weight: 500; margin: 0; }
+.panel .line { color: var(--p-ink-3); font-size: 17px; line-height: 24px; }
+.panel .proposals li { padding: 6px 0; }
+.lane { border-top: 1px solid var(--p-line); padding-top: 12px; }
+.lane .head { display: flex; align-items: baseline; gap: 8px; cursor: pointer; }
+.lane .head .n { font-size: 12px; color: var(--p-muted); }
+.lane .head .hint { font-size: 12px; color: var(--p-muted); margin-left: auto; }
+.lane.target { outline: 1.5px dashed var(--p-faint); outline-offset: 6px; border-radius: 4px; }
+.lane .row { display: grid; grid-template-columns: 16px 1fr; gap: 8px; padding: 6px 0; font-size: 13px; line-height: 18px; }
+.lane .row .why { color: var(--p-ink-3); }
+.panel .ask { margin: 0; }
+.panel .ask .q { font-size: 17px; line-height: 24px; }
+
+.hud {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.hud .name { font-weight: 500; }
+
