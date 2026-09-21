@@ -12,6 +12,8 @@ What comes back is a brief you can hand to a coding agent.
 Naru (나루) is the Korean word for a small river ferry landing: the place
 things arrive.
 
+The space is live at **[naruspace.vercel.app](https://naruspace.vercel.app)**.
+
 ## Two surfaces
 
 | | What it is | Where |
