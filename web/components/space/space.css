@@ -1,0 +1,570 @@
+/* The space. Tokens follow DESIGN.md: monochrome, system font, weight-driven
+   hierarchy, Garamond only for content voice. */
+:root {
+  --cell: 200px;
+  --dim: 0.22;
+  --gather-ms: 600ms;
+  --bar-bottom: 40px;
+  --bar-h: 44px;
+  --glass: blur(36px) saturate(1.9) brightness(1.02);
+  --radius-surface: 27px;
+  --tile-font: 21px;
+  --tile-radius: 3px;
+  --hairline: rgba(0, 0, 0, 0.2);
+  --p-ground: #fcfcfc;
+  --p-surface: #f4f4f5;
+  --p-surface-2: #ebebec;
+  --p-line: #e6e6e6;
+  --p-ink: #0d0d0d;
+  --p-ink-2: #3c3c3c;
+  --p-ink-3: #6b6b6b;
+  --p-muted: #767676;
+  --p-faint: #c2c2c2;
+  --p-on-ink: #ffffff;
+  --p-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+/* Light only. The space is a white room with a black tile, glass pills and
+   your own thumbnails; a dark skin is a second design, not a token flip. */
+.proto {
+  color-scheme: light;
+  min-height: 100dvh;
+  background: var(--p-ground);
+  color: var(--p-ink);
+  font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 24px;
+  -webkit-font-smoothing: antialiased;
+}
+.proto * { box-sizing: border-box; }
+:where(.proto) button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+:where(.proto) textarea { font: inherit; color: inherit; }
+/* Keyboard focus is a soft halo, never a black box. It takes the shape of
+   what it surrounds, so every focusable thing carries a radius. */
+.proto :focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(13, 13, 13, 0.12); }
+.proto .go:focus-visible, .proto .pill:focus-visible, .cell:focus-visible { box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.55), 0 0 0 5px rgba(13, 13, 13, 0.16); }
+.bar input:focus-visible { box-shadow: none; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.display { font-family: var(--font-display), "Goudy Bookletter 1911", Georgia, serif; }
+
+.eyebrow {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  color: var(--p-ink-3);
+}
+.meta { font-size: 13px; line-height: 20px; color: var(--p-muted); }
+.meta b { font-weight: 500; color: var(--p-ink-2); }
+
+.glyph {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--p-surface-2);
+  color: var(--p-ink-3);
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.glyph .in { font-weight: 700; letter-spacing: -0.02em; line-height: 1; }
+.glyph .mark { display: block; background: currentColor; mask-size: contain; mask-repeat: no-repeat; mask-position: center; -webkit-mask-size: contain; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center; }
+.proto .pill svg, .bar .go svg { margin-right: 6px; }
+
+.thumb {
+  display: block;
+  background: var(--p-surface-2);
+  border-radius: 4px;
+  object-fit: cover;
+  width: 100%;
+}
+
+.proto .pill {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  flex: none;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--p-ink);
+  color: var(--p-on-ink);
+  font-size: 13px;
+  font-weight: 500;
+  transition: opacity 150ms var(--p-ease);
+}
+.proto .pill:disabled { opacity: 0.3; cursor: default; }
+.textbtn {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--p-ink-3);
+  height: 32px;
+  padding: 0 4px;
+}
+.textbtn:hover { color: var(--p-ink); }
+
+/* A thumbnail holds its slot from the first frame: the skeleton is the exact
+   size of the image, so the grid never reflows when bytes land. The sweep is
+   one gradient moving across a surface-grey base. */
+.pic-slot { position: relative; display: block; overflow: hidden; background: #f0f0f1; flex: none; }
+.pic-slot img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: inherit; opacity: 0; transition: opacity 200ms var(--p-ease); }
+.pic-slot[data-state='done'] img { opacity: 1; }
+.pic-slot[data-state='failed'] img { opacity: 0; }
+/* The sweep is a band moved with a transform, not a background-position: the
+   field can hold a thousand skeletons and only the compositor should work.
+   React Flow only mounts the cells in view, so that is the bound. */
+.pic-slot .skel { position: absolute; inset: 0; border-radius: inherit; background: #f0f0f1; overflow: hidden; }
+.pic-slot .skel::after { content: ''; position: absolute; inset: -80% -140%; background: linear-gradient(118deg, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0.5) 50%, rgba(255, 255, 255, 0) 70%); transform: translate3d(-40%, -40%, 0); }
+.pic-slot .skel::after { animation: shimmer 3.2s cubic-bezier(0.45, 0, 0.55, 1) infinite; }
+@keyframes shimmer { from { transform: translate3d(-40%, -40%, 0); } to { transform: translate3d(40%, 40%, 0); } }
+
+/* Narrow screens: the bar fills the dock instead of sizing to its content,
+   so Gather and Ideas stay on screen. Desktop keeps the breathing width. */
+@media (max-width: 560px) {
+  .dock, .dock.open { width: calc(100vw - 32px); }
+  .dock .bar { width: 100%; }
+  .dock .bar input { flex: 1 1 auto; width: auto; min-width: 0; max-width: none; }
+  .space .topleft .bloom { max-width: calc(100vw - 32px); }
+  .sources { width: min(360px, calc(100vw - 34px)); }
+}
+
+/* ---------- idea document ---------- */
+/* The document fills the space and scrolls on its own. Reference: a reading
+   page with a fixed rail (back link + section list) at the left and a 560px
+   article centered on the viewport. */
+.overlay { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; background: #ffffff; z-index: 20; }
+.doc { max-width: 640px; margin: 0 auto; padding: 96px 32px 160px; color: var(--p-ink-2); }
+.doc .rail { position: fixed; top: 96px; left: 40px; font-size: 13px; line-height: 16px; }
+.doc .rail .links { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; transition: opacity 500ms cubic-bezier(0.25, 0.1, 0.25, 1); }
+.doc .rail .links:hover { transition-duration: 200ms; }
+.doc .rail .links.dim { opacity: 0.4; }
+.doc .rail .links.dim:hover, .doc .rail .links.dim:has(:focus-visible) { opacity: 1; }
+.doc .rail .back { height: auto; margin-bottom: 24px; }
+.doc .rail a { color: var(--p-muted); text-decoration: none; }
+.doc .rail a:hover { color: var(--p-ink); }
+.doc .head { display: flex; align-items: center; gap: 12px; }
+.doc h1 { flex: 1; font-size: 34px; line-height: 40px; font-weight: 400; margin: 0; color: var(--p-ink); }
+.doc h1[contenteditable]:focus { outline: none; }
+.doc .read { font-size: 21px; line-height: 28px; color: var(--p-ink-3); margin: 40px 0 0; }
+.doc .head + .meta, .doc .read + .meta { margin-top: 40px; }
+.doc .section { margin-top: 80px; }
+.doc .section-head { display: flex; align-items: baseline; gap: 8px; padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px solid var(--p-line); }
+.doc .section-head .name { font-size: 22px; line-height: 28px; color: var(--p-ink); }
+.doc .section-head .n { font-size: 13px; color: var(--p-muted); }
+.doc .section-head .hint { font-size: 13px; color: var(--p-muted); margin-left: auto; }
+@media (max-width: 1100px) { .doc .rail { position: static; margin-bottom: 40px; } }
+
+.tension { font-size: 19px; line-height: 28px; color: var(--p-ink-2); margin: 0 0 16px; }
+.tension b { font-weight: 500; color: var(--p-ink); font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif; font-size: 15px; }
+
+.theme-row { padding: 20px 0; border-top: 1px solid var(--p-line); }
+.theme-row:last-child { border-bottom: 1px solid var(--p-line); }
+.theme-row .top { display: flex; align-items: baseline; gap: 12px; }
+.theme-row .name { font-weight: 500; }
+.theme-row .n { font-size: 12px; color: var(--p-muted); }
+.theme-row .line { color: var(--p-ink-3); font-size: 17px; line-height: 24px; margin: 2px 0 12px; }
+.theme-row .strip { display: flex; gap: 8px; margin-bottom: 12px; }
+.theme-row .strip .thumb { width: 56px; height: 56px; }
+.theme-row .strip .text { width: 56px; height: 56px; border-radius: 4px; background: var(--p-surface); padding: 6px; font-size: 9px; line-height: 11px; color: var(--p-ink-3); overflow: hidden; }
+.proposals { margin: 8px 0 0; padding: 0; list-style: none; }
+.proposals li { padding: 8px 0; display: flex; gap: 12px; align-items: baseline; }
+.proposals li button { text-align: left; }
+.proposals li button:hover { text-decoration: underline; text-underline-offset: 3px; }
+.proposals li .k { font-size: 12px; color: var(--p-muted); flex: none; width: 16px; }
+
+.save-row { display: grid; grid-template-columns: 16px 1fr auto; gap: 12px; align-items: start; padding: 12px 0; border-bottom: 1px solid var(--p-line); }
+.save-row .t { color: var(--p-ink); }
+.save-row .glyph { margin-top: 4px; }
+.save-row .t { font-weight: 500; }
+.save-row .why { color: var(--p-ink-3); }
+.save-row .acts { display: flex; gap: 2px; align-self: center; opacity: 0; transition: opacity 150ms var(--p-ease); }
+.save-row:hover .acts, .save-row:focus-within .acts, .save-row.kept .acts, .save-row.gone .acts { opacity: 1; }
+.save-row .circ { width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: none; color: #9a9a9a; }
+.save-row .circ:hover { background: var(--p-surface); color: var(--p-ink); }
+.save-row.kept .circ.keep { background: var(--p-ink); color: var(--p-on-ink); }
+.save-row.gone { opacity: 0.3; }
+
+.ask { margin: 32px 0; padding: 20px; border-radius: var(--radius-surface); background: var(--p-surface); }
+.ask .meta { margin-bottom: 8px; }
+.ask .q { font-size: 21px; line-height: 28px; color: var(--p-ink); margin: 0 0 12px; }
+.ask .ev { font-size: 13px; line-height: 20px; color: var(--p-muted); margin-bottom: 20px; }
+.ask textarea { display: block; width: 100%; min-height: 64px; border: 0; border-radius: calc(var(--radius-surface) - 20px); padding: 10px 12px; background: var(--p-ground); resize: none; overflow: hidden; }
+.ask textarea:focus { outline: 1px solid var(--p-faint); }
+.ask .acts { display: flex; gap: 8px; margin-top: 16px; align-items: center; }
+.ask .acts .textbtn { color: #9a9a9a; }
+.ask.done { background: none; margin: 24px 0; padding: 0 0 0 16px; border-left: 2px solid var(--p-line); }
+.ask.done .a { color: var(--p-ink-2); }
+
+.gap { padding: 16px; border-radius: var(--radius-surface); background: var(--p-surface); margin-top: 8px; }
+.gap .t { font-weight: 500; }
+.gap .l { color: var(--p-ink-3); font-size: 15px; line-height: 24px; margin: 2px 0 8px; }
+
+.brief { margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--p-line); display: flex; align-items: center; gap: 16px; }
+.brief .meta { flex: 1; }
+.brief-out { margin-top: 24px; }
+.brief-out pre { margin: 8px 0 0; padding: 16px; border-radius: var(--radius-surface); background: var(--p-surface); font: 13px/20px ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; color: var(--p-ink-2); }
+
+.back { display: inline-flex; gap: 6px; font-size: 13px; color: var(--p-ink-3); height: 32px; align-items: center; }
+.back:hover { color: var(--p-ink); }
+
+/* ---------- the space (Pool numbers: 160 cell, 210 pitch, 288x39 glass bar) ---------- */
+.space { position: fixed; inset: 0; background: #ffffff; }
+.space .react-flow__node { transition: transform var(--gather-ms) var(--p-ease); }
+.space .react-flow__node:has(> .cell.hop) { transition: none; }
+.space .cell.hop { animation: hop 240ms var(--p-ease) both; }
+@keyframes hop { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+.space .react-flow__attribution { font-size: 10px; color: var(--p-faint); background: none; }
+
+.cell {
+  width: var(--cell);
+  height: var(--cell);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.space.gathering .cell { transition: opacity 300ms var(--p-ease); }
+.cell .pic-slot { width: var(--cell); height: var(--cell); border-radius: var(--tile-radius); }
+.cell img { width: var(--cell); height: var(--cell); object-fit: cover; border-radius: var(--tile-radius); display: block; background: #f4f4f5; }
+.cell .text { width: var(--cell); height: var(--cell); border-radius: var(--tile-radius); background: #f4f4f5; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; font-size: 13px; line-height: 18px; color: #3c3c3c; }
+/* The lane pill owns the top-left corner, so the source mark sits opposite it.
+   Fixed, not conditional: the mark must not jump when a pill appears. */
+.cell .text .glyph { align-self: flex-end; }
+.cell.dim { opacity: var(--dim); }
+.cell:hover { opacity: 0.85; }
+.cell.dim:hover { opacity: 0.4; }
+.cell { position: relative; }
+.cell .lane { position: absolute; top: 8px; left: 8px; z-index: 1; height: 20px; padding: 0 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.92); color: #0d0d0d; font-size: 11px; line-height: 20px; font-weight: 500; backdrop-filter: blur(8px); }
+.cell.disagrees .lane { background: #0d0d0d; color: #fff; }
+.cell.visual .lane, .cell.precedent .lane, .cell.howto .lane, .cell.mood .lane { color: #3c3c3c; }
+.cell.tile { width: var(--cell); height: var(--cell); padding: 14px; border-radius: var(--tile-radius); background: #0d0d0d; flex-direction: column; text-align: center; gap: 8px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 1px 2px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.06), 0 4px 8px rgba(0, 0, 0, 0.05), 0 8px 16px rgba(0, 0, 0, 0.04); }
+.cell.tile span.display { font-size: var(--tile-font); line-height: 1.28; color: #ffffff; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; }
+.cell.tile .open { font-size: 11px; line-height: 16px; font-weight: 500; color: rgba(255, 255, 255, 0.6); }
+
+/* One dock at the bottom: the bar is its last row, and a selected save
+   unfolds upward from it at the same width. */
+/* One surface at the bottom. Collapsed it is the bar; a selected save or the
+   scope panel grows the same pill into a card, with the bar as its last row. */
+.dock {
+  position: fixed;
+  left: 50%;
+  bottom: var(--bar-bottom);
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 288px;
+  max-width: calc(100vw - 32px);
+  /* An explicit pixel width at both ends, so the box can animate between them.
+     --barw is the bar's own content width, measured while it is laid out. */
+  width: var(--barw, max-content);
+  padding: 6px;
+  /* Finite, not 9999: a radius larger than half the height is clamped, so an
+     animation from 9999 balloons as the dock grows, then snaps back. */
+  border-radius: calc(var(--bar-h) / 2);
+  /* Frosted glass, built the way the WebGL version models it but in CSS: a
+     sheen falling from the top, a soft hotspot at the upper left, an even
+     1px rim rather than a bright line on one edge, and enough white that the
+     photographs behind stay a texture instead of content. */
+  background-color: rgba(255, 255, 255, 0.76);
+  background-image:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.62) 0, rgba(255, 255, 255, 0) 26px),
+    linear-gradient(0deg, rgba(255, 255, 255, 0.34) 0, rgba(255, 255, 255, 0) 16px),
+    radial-gradient(90px 46px at 18% 0%, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 70%);
+  border: 1px solid rgba(255, 255, 255, 0.66);
+  backdrop-filter: var(--glass);
+  box-shadow:
+    rgba(13, 13, 13, 0.1) 0 10px 34px,
+    rgba(13, 13, 13, 0.06) 0 2px 8px,
+    rgba(255, 255, 255, 0.35) 0 0 0 1px inset,
+    rgba(255, 255, 255, 0.28) 0 -10px 22px inset;
+  font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  /* Width follows the bar frame by frame while it breathes, so the glass and
+     the field inside it move as one. Only opening and closing animates it,
+     and that rule lives below, on the states that hold a panel. */
+  transition: border-radius 320ms cubic-bezier(0.22, 1.02, 0.36, 1), background-color 320ms var(--p-ease);
+}
+.dock.open { width: 440px; border-radius: var(--radius-surface); background-color: rgba(255, 255, 255, 0.93); }
+/* A panel is on screen, opening or on its way out: the box animates. */
+.dock:has(.savecard), .dock:has(.scope) { transition: width 320ms cubic-bezier(0.22, 1.02, 0.36, 1), border-radius 320ms cubic-bezier(0.22, 1.02, 0.36, 1), background-color 320ms var(--p-ease); }
+/* A docked save owns the whole surface: the bar's controls belong to typing,
+   not to the save, so they leave until it closes. */
+/* Hidden, not removed: the bar still has to report its width so the dock can
+   animate back to it when the card closes. */
+.dock.card .bar { visibility: hidden; height: 0; overflow: hidden; }
+.dock.card .savecard .inner { padding: 2px; }
+.dock.open:not(.card) .bar input { flex: 1; width: auto; min-width: 0; max-width: none; }
+
+/* max-content, so the bar reports what it actually needs. Stretched to the
+   dock it would only ever report the dock's width back, and the measurement
+   could grow but never shrink. */
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: max-content;
+  height: calc(var(--bar-h) - 12px);
+  padding: 0 2px;
+}
+.dock.open .bar { width: 100%; }
+.bar .orbslot { width: 20px; height: 20px; border-radius: 50%; flex: none; margin-left: 4px; display: flex; align-items: center; justify-content: center; }
+/* Registered so the gradient's two stops can be transitioned as colours. */
+@property --orb-a { syntax: '<color>'; inherits: true; initial-value: #5b6cff; }
+@property --orb-b { syntax: '<color>'; inherits: true; initial-value: #dfe4ff; }
+.bar .orbslot { transition: --orb-a 900ms cubic-bezier(0.45, 0, 0.55, 1), --orb-b 900ms cubic-bezier(0.45, 0, 0.55, 1); }
+.bar .dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: radial-gradient(130% 130% at 28% 18%, var(--orb-a, #5b6cff) 0%, var(--orb-b, #dfe4ff) 58%, #ffffff 100%);
+  box-shadow: rgba(255, 255, 255, 0.8) 0 -2px 4px inset, rgba(13, 13, 13, 0.06) 0 0 0 1px;
+  transition: background 300ms var(--p-ease), box-shadow 300ms var(--p-ease);
+}
+.bar .dot.on { background: #0d0d0d; box-shadow: none; }
+.bar input:focus { width: min(44ch, calc(var(--w, 24ch) + 3ch)); }
+.bar input { flex: none; width: var(--w, 24ch); min-width: 120px; max-width: 44ch; transition: width 320ms cubic-bezier(0.34, 1.4, 0.64, 1); border: 0; background: none; font-size: 14px; line-height: 20px; color: #0d0d0d; outline: none; }
+.bar input::placeholder { color: #9a9a9a; }
+.bar .seg { display: flex; gap: 2px; background: rgba(0, 0, 0, 0.05); border-radius: 999px; padding: 2px; flex: none; }
+.bar .seg button { height: 21px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 500; color: #6b6b6b; }
+.bar .seg button.on { background: #fff; color: #0d0d0d; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06); }
+.bar .go { height: 27px; padding: 0 12px 0 10px; border-radius: 999px; display: flex; align-items: center; background: #0d0d0d; color: #fff; font-size: 12px; font-weight: 500; flex: none; transition: opacity 150ms var(--p-ease); }
+.bar .go:disabled { opacity: 0.25; cursor: default; }
+.bar .go, .bar .ideas { position: relative; }
+.bar .go::after, .bar .ideas::after { content: ''; position: absolute; inset: -6px; }
+.bar .ideas { height: 27px; padding: 0 10px; border-radius: 999px; font-size: 12px; font-weight: 500; color: #6b6b6b; flex: none; }
+.bar .ideas:hover, .bar .ideas.on { color: #0d0d0d; background: rgba(0, 0, 0, 0.05); }
+.bar .ideas:disabled { opacity: 0.25; cursor: default; }
+
+
+/* ---------- top chrome: one ghost pill for the count, the filter, and the 3D switch ---------- */
+.space .count, .toggle3d {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b6b6b;
+  background-color: rgba(255, 255, 255, 0.76);
+  background-image:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.58) 0, rgba(255, 255, 255, 0) 14px),
+    linear-gradient(0deg, rgba(255, 255, 255, 0.3) 0, rgba(255, 255, 255, 0) 9px),
+    radial-gradient(56px 22px at 18% 0%, rgba(255, 255, 255, 0.48), rgba(255, 255, 255, 0) 70%);
+  border: 1px solid rgba(255, 255, 255, 0.66);
+  backdrop-filter: var(--glass);
+  box-shadow:
+    rgba(13, 13, 13, 0.08) 0 6px 20px,
+    rgba(13, 13, 13, 0.05) 0 1px 4px,
+    rgba(255, 255, 255, 0.35) 0 0 0 1px inset,
+    rgba(255, 255, 255, 0.24) 0 -6px 14px inset;
+  cursor: pointer;
+}
+.space .count b { font-weight: 500; color: #0d0d0d; margin: 0 2px; }
+.space .count.on, .space .count:hover, .toggle3d.on, .toggle3d:hover { color: #0d0d0d; }
+.space .topleft { position: fixed; top: 16px; left: 16px; z-index: 12; display: flex; gap: 6px; }
+/* bloom-menu morphs the pill itself into the sheet, so the surface lives on
+   its container and the trigger and content are bare. */
+/* The sheet grows from where the pill already is: bloom drops it 24px when it
+   opens downward, and the pill's own y is the anchor we want. */
+.space .topleft .bloom {
+  transform: none !important;
+  background-color: rgba(255, 255, 255, 0.76);
+  background-image:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.58) 0, rgba(255, 255, 255, 0) 14px),
+    linear-gradient(0deg, rgba(255, 255, 255, 0.3) 0, rgba(255, 255, 255, 0) 9px),
+    radial-gradient(56px 22px at 18% 0%, rgba(255, 255, 255, 0.48), rgba(255, 255, 255, 0) 70%);
+  border: 1px solid rgba(255, 255, 255, 0.66);
+  backdrop-filter: var(--glass);
+  box-shadow:
+    rgba(13, 13, 13, 0.08) 0 6px 20px,
+    rgba(13, 13, 13, 0.05) 0 1px 4px,
+    rgba(255, 255, 255, 0.35) 0 0 0 1px inset,
+    rgba(255, 255, 255, 0.24) 0 -6px 14px inset;
+}
+.space .topleft .count.trigger { height: 32px; padding: 0 12px; background: none; border: 0; box-shadow: none; backdrop-filter: none; width: 100%; }
+.space .topleft .bloom > div { transform-origin: left top !important; }
+.sources .row.add { display: flex; align-items: center; gap: 10px; width: 100%; padding: 6px 10px; border-radius: calc(var(--radius-surface) - 8px); font-size: 13px; line-height: 18px; text-align: left; color: var(--p-ink-3); }
+.sources .row.add:hover { background: rgba(0, 0, 0, 0.04); color: #0d0d0d; }
+.sources .row.add .plus { width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--p-surface); color: #6b6b6b; flex: none; }
+.sources .row.add input { flex: 1; min-width: 0; height: 28px; border: 0; background: none; font-size: 13px; color: #0d0d0d; outline: none; }
+.sources .addhint { padding: 0 10px 4px 48px; font-size: 12px; line-height: 16px; color: var(--p-muted); }
+.sources .row.add input::placeholder { color: #9a9a9a; }
+.space .anchor { position: relative; }
+.space .filterpill .chev { transition: transform 200ms var(--p-ease); }
+.space .filterpill .chev.up { transform: rotate(180deg); }
+/* The 3D control is a plain pill; pressed = the selected state of the same pill. */
+.toggle3d { position: fixed; top: 16px; right: 16px; z-index: 12; transition: background 150ms var(--p-ease), color 150ms var(--p-ease); }
+.toggle3d.on { background: #0d0d0d; color: #fff; border-color: #0d0d0d; }
+
+/* sheets hang under their pill: 8px gap, same surface radius, inner radius = outer - padding */
+.filtermenu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 12;
+  border-radius: var(--radius-surface);
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--hairline);
+  backdrop-filter: var(--glass);
+  box-shadow: rgba(0, 0, 0, 0.06) 0 8px 32px, rgba(0, 0, 0, 0.04) 0 2px 8px;
+}
+.filtermenu { width: 260px; max-height: 60vh; overflow: auto; }
+.filtermenu .row, .dock .scope .row { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; padding: 7px 10px; border-radius: calc(var(--radius-surface) - 8px); font-size: 13px; line-height: 18px; color: #3c3c3c; }
+.filtermenu .row:hover, .dock .scope .row:hover { background: rgba(0, 0, 0, 0.04); }
+.filtermenu .row.on, .dock .scope .row.on { background: #0d0d0d; color: #fff; }
+.filtermenu .row .name, .dock .scope .row .name { flex: 1; }
+.filtermenu .row .n, .dock .scope .row .n { color: #9a9a9a; font-variant-numeric: tabular-nums; }
+.filtermenu .row.on .n, .dock .scope .row.on .n { color: rgba(255, 255, 255, 0.6); }
+.filtermenu .sep, .dock .scope .sep { height: 1px; background: var(--hairline); margin: 6px 4px; }
+.filtermenu .note, .dock .scope .note { padding: 6px 10px 2px; font-size: 12px; }
+
+/* Fixed, not 100%: the sheet's rows must not reflow while the box grows, or
+   the morph reads as content unfolding from the middle. The height is capped
+   and scrolls, because bloom measures the content once when it opens: a row
+   or a hint added later would be clipped by the box it already sized. */
+.sources { width: 360px; max-height: min(62vh, 520px); overflow-y: auto; padding: 12px 8px 8px; }
+.sources .eyebrow { padding: 0 10px 6px; }
+.sources .head { display: flex; align-items: center; gap: 6px; }
+.sources .row { display: grid; grid-template-columns: 28px 1fr auto auto; align-items: center; gap: 10px; padding: 6px 10px; border-radius: calc(var(--radius-surface) - 8px); font-size: 13px; line-height: 18px; }
+.sources .drop { color: #9a9a9a; }
+.sources .drop:hover { color: #0d0d0d; }
+.sources .head .edit { margin-left: auto; height: 20px; font-size: 12px; }
+.sources .row:hover { background: rgba(0, 0, 0, 0.04); }
+.sources .row .who { display: flex; flex-direction: column; line-height: 16px; min-width: 0; }
+.sources .row:not(.add) .name { text-transform: capitalize; }
+.sources .row .n { color: #9a9a9a; font-variant-numeric: tabular-nums; }
+.sources .row .how { color: var(--p-muted); font-size: 12px; }
+.sources .row .textbtn { height: 24px; }
+.sources .info { display: inline-flex; }
+.sources .info > button { width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: #767676; cursor: help; }
+.sources .info > button:hover, .sources .info > button:focus { color: #0d0d0d; }
+.sources .tip {
+  position: absolute;
+  left: 8px;
+  top: 44px;
+  width: calc(100% - 16px);
+  padding: 12px 14px;
+  border-radius: calc(var(--radius-surface) - 8px);
+  background: #0d0d0d;
+  color: #fff;
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 400;
+  z-index: 3;
+}
+.sources .tip[hidden] { display: none; }
+
+
+.space3d {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background: #fff;
+  overflow: hidden;
+  perspective: 1400px;
+  perspective-origin: 50% 40%;
+  cursor: grab;
+  touch-action: none;
+}
+.space3d:active { cursor: grabbing; }
+.space3d .scene {
+  position: absolute;
+  left: 50%;
+  top: 55%;
+  width: 0;
+  height: 0;
+  transform-style: preserve-3d;
+}
+.space3d .obj {
+  position: absolute;
+  left: -48px;
+  top: -48px;
+  width: 96px;
+  height: 96px;
+  transform-style: preserve-3d;
+  transform-origin: 50% 100%;
+  cursor: pointer;
+  transition: opacity 240ms var(--p-ease);
+}
+.space3d .obj .pic-slot { width: 96px; height: 96px; border-radius: 6px; box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12); }
+.space3d .obj img { width: 96px; height: 96px; object-fit: cover; border-radius: 6px; display: block; }
+.space3d .obj .text { width: 96px; height: 96px; border-radius: 6px; background: #f4f4f5; padding: 8px; font-size: 9px; line-height: 12px; color: #3c3c3c; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08); }
+.space3d .obj.blur-1 { filter: blur(1px); }
+.space3d .obj.blur-2 { filter: blur(3px); }
+.space3d .obj.dim { opacity: 0.12; }
+.space3d .obj.focus { filter: none; z-index: 2; }
+.space3d .obj.focus img, .space3d .obj.focus .text { box-shadow: 0 24px 48px rgba(0, 0, 0, 0.22); }
+
+
+/* ---------- selection, tags, favorites ---------- */
+/* A picked save lifts rather than wearing a box: the card at the dock already
+   shows which one it is, so this only has to say "that one". */
+.cell.selected { transform: scale(1.03); box-shadow: 0 10px 28px rgba(13, 13, 13, 0.18), 0 2px 6px rgba(13, 13, 13, 0.1); z-index: 3; }
+.cell { transition: opacity 300ms var(--p-ease), transform 200ms var(--p-ease), box-shadow 200ms var(--p-ease); }
+
+/* The panel is the dock's top child, so it clips to the dock's inner radius:
+   without that its square corners paint over the rounded ones. */
+.dock .scope { position: relative; overflow: hidden; border-radius: calc(var(--radius-surface) - 6px) calc(var(--radius-surface) - 6px) 0 0; }
+.dock .scope .inner { padding: 2px 2px 8px; max-height: min(52vh, 420px); overflow-y: auto; }
+.dock .scope .eyebrow { padding: 4px 10px 6px; }
+.dock .scope .row .glyph { flex: none; }
+.dock .scope .row .glyph + .name { text-transform: capitalize; }
+.dock .scope .row .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar .orbslot.open .dot { background: #0d0d0d; box-shadow: none; }
+
+.savecard { overflow: hidden; cursor: default; }
+/* One order, top to bottom: who saved it, what it is, what you call it, what
+   you do with it. The thumbnail's height comes from the text beside it, so no
+   arbitrary square. */
+.savecard .inner { display: flex; flex-direction: column; gap: 12px; padding: 2px 2px 4px; }
+.savecard .lead { display: flex; gap: 12px; align-items: stretch; }
+/* The thumbnail opens: hover dims it and shows the expand mark. */
+.savecard .picbtn { position: relative; width: 80px; align-self: stretch; flex: none; border-radius: calc(var(--radius-surface) - 8px); overflow: hidden; display: block; }
+.savecard .pic { width: 100%; height: 100%; min-height: 80px; border-radius: inherit; }
+.savecard .picbtn .over { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #fff; background: rgba(13, 13, 13, 0.42); opacity: 0; transition: opacity 160ms var(--p-ease); }
+.savecard .picbtn:hover .over, .savecard .picbtn:focus-visible .over { opacity: 1; }
+
+/* The picture, full size, over the space. */
+.lightbox { position: fixed; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center; padding: 48px; background: rgba(255, 255, 255, 0.72); backdrop-filter: blur(28px) saturate(1.4); cursor: zoom-out; }
+.lightbox img { max-width: min(560px, 100%); max-height: 100%; border-radius: var(--radius-surface); box-shadow: rgba(13, 13, 13, 0.16) 0 24px 60px, rgba(13, 13, 13, 0.08) 0 4px 12px; object-fit: contain; }
+.lightbox .close { position: fixed; top: 16px; right: 16px; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #0d0d0d; background: rgba(255, 255, 255, 0.92); border: 1px solid var(--hairline); }
+.lightbox .close:hover { background: #fff; }
+.lightbox:focus { outline: none; }
+.savecard .pic img { width: 100%; height: 100%; object-fit: cover; }
+.savecard .body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.savecard .m { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #9a9a9a; padding-left: 2px; }
+.savecard .grow { flex: 1; }
+.savecard .heart, .savecard .x { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #6b6b6b; }
+.savecard .heart:hover, .savecard .x:hover { background: rgba(0, 0, 0, 0.05); color: #0d0d0d; }
+.savecard .heart.on { color: #0d0d0d; }
+.savecard .t { font-size: 20px; line-height: 25px; color: #0d0d0d; }
+.savecard .s { font-size: 13px; line-height: 18px; color: #6b6b6b; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.savecard .tags { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; padding-left: 2px; }
+.savecard .tag { height: 24px; padding: 0 10px; border-radius: 999px; background: rgba(13, 13, 13, 0.06); border: 1px solid rgba(13, 13, 13, 0.1); font-size: 12px; font-weight: 500; color: #0d0d0d; }
+.savecard .tag:hover { background: rgba(13, 13, 13, 0.12); text-decoration: line-through; }
+.savecard .tags input { height: 24px; width: 72px; border: 0; border-radius: 999px; background: none; font-size: 12px; color: #0d0d0d; outline: none; padding: 0 6px; }
+.savecard .tags input::placeholder { color: #9a9a9a; }
+.savecard .cta { width: 100%; height: 40px; justify-content: center; font-size: 14px; }
+
+
+/* the stage wrapper only carries opacity while a document is open; no transform, so fixed children keep the viewport */
+.space .stage { position: absolute; inset: 0; }
+
+/* ---------- audit pass: numbers, wrapping, pressed states, safe areas, reduced motion ---------- */
+.space .count b, .meta b, .doc .section-head .n, .cell.tile .open, .filtermenu .n, .sources .n { font-variant-numeric: tabular-nums; }
+.doc h1, .savecard .t, .cell.tile span.display { text-wrap: balance; }
+.doc .read, .ask .q, .savecard .s, .cell .text span { text-wrap: pretty; }
+.proto .pill, .bar .go, .toggle3d, .space .count { transition: transform 100ms var(--p-ease), background 150ms var(--p-ease), color 150ms var(--p-ease); }
+.proto .pill:active, .bar .go:active:not(:disabled), .toggle3d:active, .space .count:active { transform: scale(0.97); }
+.space .topleft { top: calc(16px + env(safe-area-inset-top)); left: calc(16px + env(safe-area-inset-left)); }
+.toggle3d { top: calc(16px + env(safe-area-inset-top)); right: calc(16px + env(safe-area-inset-right)); }
+.dock { bottom: calc(var(--bar-bottom) + env(safe-area-inset-bottom)); }
+@media (prefers-reduced-motion: reduce) {
+  .space .react-flow__node, .space.gathering .cell, .bar, .bar input, .cell, .proto .pill, .toggle3d, .space .count { transition-duration: 1ms !important; }
+  .space .cell.hop { animation-duration: 1ms !important; }
+    .pic-slot .skel::after { animation: none; }
+}
