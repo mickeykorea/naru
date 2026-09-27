@@ -414,26 +414,31 @@ struct ContentView: View {
             HStack {
                 Button { showSearch = true } label: {
                     Image(systemName: "magnifyingglass")
-                        .font(.system(size: 17, weight: .semibold))
+                        .font(.system(size: 20, weight: .medium))
                         .foregroundStyle(.primary)
-                        .frame(width: 52, height: 52)
+                        .frame(width: 41, height: 41)
                 }
-                .glassEffect(.regular.interactive(), in: Circle())
+                .buttonStyle(.glass)
                 .accessibilityIdentifier("search-button")
                 Spacer()
                 Button { showSaveSheet = true } label: {
                     Image(systemName: "plus")
-                        .font(.system(size: 19, weight: .semibold))
+                        .font(.system(size: 24, weight: .medium))
                         .foregroundStyle(Color(.systemBackground))
-                        .frame(width: 52, height: 52)
+                        .frame(width: 41, height: 41)
                 }
-                .glassEffect(.regular.tint(.primary.opacity(0.92)).interactive(), in: Circle())
+                .buttonStyle(.glassProminent)
+                .tint(.primary.opacity(0.92))
             }
+            .buttonBorderShape(.circle)
             .tint(.primary)
         }
         .frame(maxWidth: .infinity)
-        .padding(.horizontal, 20)
-        .padding(.bottom, 8)
+        // measured off the iOS 27 reference: 27.5pt from the screen edges,
+        // which sits inside the home-indicator inset
+        .padding(.horizontal, 27.5)
+        .padding(.bottom, 27.5)
+        .ignoresSafeArea(edges: .bottom)
         .offset(y: bottomBarHidden ? 140 : 0)
         .animation(.snappy(duration: 0.3, extraBounce: 0), value: bottomBarHidden)
     }
