@@ -59,7 +59,7 @@ struct ContentView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 20)
                     // clear the floating glass button row, with air below it
-                    .padding(.top, 76)
+                    .padding(.top, 88)
                     .padding(.bottom, 120)
                 }
                 .scrollEdgeEffectStyle(.soft, for: .top)
@@ -288,13 +288,14 @@ struct ContentView: View {
             }
         } label: {
             Image(systemName: "ellipsis")
-                .font(.system(size: 15, weight: .semibold))
+                .font(.system(size: 20, weight: .medium))
                 .foregroundStyle(.primary)
-                .frame(width: 44, height: 44)
+                .frame(width: 41, height: 41)
         }
+        .buttonStyle(.glass)
+        .buttonBorderShape(.circle)
         .tint(.primary)
-        .glassEffect(.regular.interactive(), in: Circle())
-        .padding(.trailing, 20)
+        .padding(.trailing, 27.5)
         .padding(.top, 8)
         .accessibilityIdentifier("more-button")
     }
