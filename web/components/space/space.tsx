@@ -73,8 +73,8 @@ function readList(key: string): string[] {
 
 type Scope = { source: Source | null; fav: boolean; tags: string[] }
 const NO_SCOPE: Scope = { source: null, fav: false, tags: [] }
-type Ctx = { lit: Set<string> | null; lanes: Record<string, LaneTag>; revealed: string | null; selected: string | null; hopped: Set<string>; cellOf: (id: string) => Cell }
-const C = createContext<Ctx>({ lit: null, lanes: {}, revealed: null, selected: null, hopped: new Set(), cellOf: () => [0, 0] })
+type Ctx = { lit: Set<string> | null; lanes: Record<string, LaneTag>; revealed: string | null; selected: string | null; hopped: Set<string>; cellOf: (id: string) => Cell; rel: Record<string, number> | null }
+const C = createContext<Ctx>({ lit: null, lanes: {}, revealed: null, selected: null, hopped: new Set(), cellOf: () => [0, 0], rel: null })
 
 /* Square spiral from the origin: index 0 is the centre, then rings outward. */
 function spiral(i: number): Cell {
@@ -190,11 +190,20 @@ function SaveNode({ data, id }: NodeProps<Node<{ save: BigSave }>>) {
   const sel = ctx.selected === id
   const hop = ctx.hopped.has(id)
   const c = ctx.cellOf(id)
+  /* While a thought is being typed every save carries its own probability, so
+     it fades on its own scale and leans toward the thought rather than being
+     sorted into a lane. Reversible: it is a transform, the grid never moves. */
+  const p = ctx.rel ? (ctx.rel[id] ?? 0) : null
+  const style: React.CSSProperties = hop ? { animationDelay: `${(Math.abs(c[0]) + Math.abs(c[1])) * 28}ms` } : {}
+  if (p !== null) {
+    style.opacity = 0.12 + 0.88 * p
+    style.zIndex = Math.round(p * 10)
+  }
   return (
     <button
       type="button"
-      className={`cell${dim && !sel ? ' dim' : ''}${lane ? ' ' + lane : ''}${sel ? ' selected' : ''}${hop ? ' hop' : ''}`}
-      style={hop ? { animationDelay: `${(Math.abs(c[0]) + Math.abs(c[1])) * 28}ms` } : undefined}
+      className={`cell${dim && !sel ? ' dim' : ''}${lane ? ' ' + lane : ''}${sel ? ' selected' : ''}${hop ? ' hop' : ''}${p !== null ? ' reading' : ''}`}
+      style={hop || p !== null ? style : undefined}
       aria-label={lane && lane !== 'near' ? `${LANES[lane].name}: ${s.title}` : s.title}
       aria-pressed={sel}
       title={s.title}
@@ -378,6 +387,41 @@ function applyGather(prev: Record<string, Cell>, centre: Cell, ids: string[], la
   return next
 }
 
+/* Sorts the saves that were read into the grid by score: the strongest takes
+   the cell closest to the centre of the screen, the weakest ends up furthest
+   out, and whoever was standing there swaps into the vacated cell. Grid-
+   aligned, reversible, and it never loses a save. */
+function sortByScore(base: Record<string, Cell>, centre: Cell, ranked: string[], reserved: Set<string>) {
+  const next = { ...base }
+  const at = new Map<string, string>()
+  for (const [id, c] of Object.entries(next)) at.set(key(c), id)
+  let probe = 0
+  for (const id of ranked) {
+    let target: Cell | null = null
+    while (probe < 4000) {
+      const d = spiral(probe++)
+      const cell: Cell = [centre[0] + d[0], centre[1] + d[1]]
+      if (reserved.has(key(cell))) continue
+      target = cell
+      break
+    }
+    if (!target) break
+    const from = next[id]
+    if (!from || key(from) === key(target)) {
+      at.set(key(target), id)
+      continue
+    }
+    const sitting = at.get(key(target))
+    next[id] = target
+    at.set(key(target), id)
+    if (sitting && sitting !== id) {
+      next[sitting] = from
+      at.set(key(from), sitting)
+    } else at.delete(key(from))
+  }
+  return next
+}
+
 /* The opening layout: every seeded idea gathered in turn, then one sweep so
    that a save two ideas both claim ends up on exactly one cell. */
 function seedLayout(): Record<string, Cell> {
@@ -437,11 +481,36 @@ function SpaceInner() {
   const [gathering, setGathering] = useState(false)
   const [busy, setBusy] = useState(false)
   const [tip, setTip] = useState(false)
+  /* Live reading. While you type, the saves on screen are scored one by one
+     against the thought and each carries its own probability: opacity, and a
+     lean toward the middle. One call when you pause, not one per keystroke,
+     and only what is mounted, because the whole archive would be a hundred
+     thousand tokens a request. */
+  const [rel, setRel] = useState<Record<string, number> | null>(null)
+  const [reading, setReading] = useState(false)
+  const readTimer = useRef<number | null>(null)
+  const readAbort = useRef<AbortController | null>(null)
+  /* The layout as it stood before you started typing. Every word re-sorts from
+     this, not from the last arrangement, so the field never drifts and an
+     empty field puts it back exactly. */
+  const restCells = useRef<Record<string, Cell> | null>(null)
+
   const argueTimer = useRef<number | null>(null)
   const tileN = useRef(0)
   const pending = useRef(false)
   /* Dismissing a gather has to cancel the second beat too: without this the
      ring re-sorts and the tally comes back a second after you cleared it. */
+  const endRead = useCallback(() => {
+    if (readTimer.current) window.clearTimeout(readTimer.current)
+    readAbort.current?.abort()
+    setRel(null)
+    setReading(false)
+    if (restCells.current) {
+      setCells(restCells.current)
+      restCells.current = null
+    }
+  }, [])
+
   const clearRing = useCallback(() => {
     if (argueTimer.current) {
       window.clearTimeout(argueTimer.current)
@@ -455,6 +524,8 @@ function SpaceInner() {
   }, [])
   useEffect(() => () => {
     if (argueTimer.current) window.clearTimeout(argueTimer.current)
+    if (readTimer.current) window.clearTimeout(readTimer.current)
+    readAbort.current?.abort()
   }, [])
   const [doc, setDoc] = useState<Tile | null>(null)
   const [view3d, setView3d] = useState(false)
@@ -628,12 +699,55 @@ function SpaceInner() {
     window.setTimeout(() => setGathering(false), 700)
   }, [setHopped])
 
-  const centreCell = (): Cell => {
+  const centreCell = useCallback((): Cell => {
     const { x, y, zoom } = flow.getViewport()
     const cx = (window.innerWidth / 2 - x) / zoom - cellPx / 2
     const cy = (window.innerHeight / 2 - y) / zoom - cellPx / 2
     return [Math.round(cx / pitch), Math.round(cy / pitch)]
-  }
+  }, [flow, cellPx, pitch])
+
+  /* Ask Jev which of the saves on screen belong to what is being typed. */
+  const read = useCallback((thought: string) => {
+    readAbort.current?.abort()
+    const centre = centreCell()
+    const near = big
+      .filter((s) => cells[s.id])
+      .map((s) => ({ s, d: Math.max(Math.abs(cells[s.id][0] - centre[0]), Math.abs(cells[s.id][1] - centre[1])) }))
+      .filter((x) => x.d <= 5)
+      .sort((a, b) => a.d - b.d)
+      .slice(0, 60)
+      .map((x) => ({ id: x.s.id, title: x.s.title }))
+    if (!near.length) return
+    const ac = new AbortController()
+    readAbort.current = ac
+    setReading(true)
+    fetch('/api/relevance', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ thought, saves: near }),
+      signal: ac.signal,
+    })
+      .then((r) => r.json())
+      .then((d: { rel?: Record<string, number> }) => {
+        if (ac.signal.aborted) return
+        const scores = d.rel && Object.keys(d.rel).length ? d.rel : null
+        setRel(scores)
+        if (!scores) return
+        /* The saves that match come to the middle. The layout they leave is
+           the resting one, so the next word re-sorts rather than compounds. */
+        const base = restCells.current ?? cells
+        restCells.current = base
+        const ranked = Object.entries(scores)
+          .sort((a, b) => b[1] - a[1])
+          .map(([hid]) => hid)
+        const reserved = new Set(tiles.map((x) => key(x.cell)))
+        setCells(sortByScore(base, centre, ranked, reserved))
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!ac.signal.aborted) setReading(false)
+      })
+  }, [cells, centreCell, tiles])
 
   /* A new tile lands where you are looking, nudged to the nearest cell that
      keeps clear of every existing tile and its ring. */
@@ -650,6 +764,7 @@ function SpaceInner() {
 
   const submit = () => {
     const t = text.trim()
+    endRead()
     /* A ref, not the busy state: five clicks in one tick all read the same
        state and would each land a tile. */
     if (!t || pending.current) return
@@ -743,6 +858,7 @@ function SpaceInner() {
     selected,
     hopped,
     cellOf: (id) => cells[id] ?? [0, 0],
+    rel,
   }
   const actions = {
     gatherAround: (id: string) => {
@@ -1035,8 +1151,8 @@ function SpaceInner() {
             aria-label={`Gather from ${filterLabel}`}
             title={`Gather from ${filterLabel}`}
           >
-            {busy ? (
-              <ThinkingOrb state="working" size={20} theme="light" aria-label="Gathering your saves" />
+            {busy || reading ? (
+              <ThinkingOrb state={busy ? 'working' : 'searching'} size={20} theme="light" aria-label={busy ? 'Gathering your saves' : 'Reading your saves'} />
             ) : scope.source ? (
               <Glyph source={scope.source} size={20} />
             ) : (
@@ -1047,8 +1163,19 @@ function SpaceInner() {
             autoFocus
             value={text}
             onChange={(e) => {
-              setText(e.target.value)
+              const v = e.target.value
+              setText(v)
               if (summary) setSummary(null)
+              /* One read when you pause. Clearing the field puts the space back. */
+              if (readTimer.current) window.clearTimeout(readTimer.current)
+              if (v.trim().length < 3) {
+                endRead()
+                return
+              }
+              /* Short, so a finished word lands almost as you finish it, and
+                 a word still being typed re-sorts too. In-flight reads are
+                 aborted, so only the newest one ever arrives. */
+              readTimer.current = window.setTimeout(() => read(v), /\s$/.test(v) ? 40 : 160)
             }}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {

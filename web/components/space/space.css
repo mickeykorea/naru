@@ -230,6 +230,10 @@
 /* The lane pill owns the top-left corner, so the source mark sits opposite it.
    Fixed, not conditional: the mark must not jump when a pill appears. */
 .cell .text .glyph { align-self: flex-end; }
+/* While a thought is being read, each save moves and fades on its own score.
+   Slower than a hover so a whole screen re-settling reads as one motion. */
+.cell.reading { transition: opacity 420ms var(--p-ease), transform 520ms cubic-bezier(0.22, 1, 0.36, 1); }
+.cell.reading:hover { opacity: 1 !important; }
 .cell.dim { opacity: var(--dim); }
 .cell:hover { opacity: 0.85; }
 .cell.dim:hover { opacity: 0.4; }
