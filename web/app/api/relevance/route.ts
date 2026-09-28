@@ -7,16 +7,48 @@ import { NextResponse } from 'next/server'
 
 const ENDPOINT = 'https://api.typesafe.ai/v1/systemone'
 const MAX_SAVES = 60
+/* The key is a prepaid balance, so a loop against this endpoint is the cost.
+   A read takes about 5k tokens, and the whole balance is a few tens of
+   thousands of them: cheap to spend, cheap to defend. */
+const PER_MINUTE = 20
+const BURST = 8
 
 type Candidate = { id: string; title: string }
+
+/* Per instance, so it is a speed bump rather than a wall: a serverless
+   function that scales out forgets what the other copies have seen. The real
+   ceiling is the spend alert on the account. */
+const seen = new Map<string, { tokens: number; at: number }>()
+
+function allow(ip: string) {
+  const now = Date.now()
+  const b = seen.get(ip) ?? { tokens: BURST, at: now }
+  b.tokens = Math.min(BURST, b.tokens + ((now - b.at) / 60000) * PER_MINUTE)
+  b.at = now
+  if (seen.size > 5000) seen.clear()
+  if (b.tokens < 1) {
+    seen.set(ip, b)
+    return false
+  }
+  b.tokens -= 1
+  seen.set(ip, b)
+  return true
+}
 
 export async function POST(req: Request) {
   const key = process.env.TYPESAFE_API_KEY
   if (!key) return NextResponse.json({ rel: {}, reason: 'no key' }, { status: 200 })
 
-  /* The space is public, the key is not: only this page may spend it. */
+  /* The space is public, the key is not: only this page may spend it. A
+     missing Origin used to pass, which is exactly what a script sends. */
+  const here = new URL(req.url).origin
   const origin = req.headers.get('origin')
-  if (origin && new URL(req.url).origin !== origin) return NextResponse.json({ rel: {} }, { status: 403 })
+  const referer = req.headers.get('referer')
+  const fromHere = origin ? origin === here : !!referer && referer.startsWith(here)
+  if (!fromHere && process.env.NODE_ENV === 'production') return NextResponse.json({ rel: {} }, { status: 403 })
+
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'local'
+  if (!allow(ip)) return NextResponse.json({ rel: {} }, { status: 429 })
 
   const { thought, saves } = (await req.json()) as { thought?: string; saves?: Candidate[] }
   const text = (thought ?? '').trim().slice(0, 300)
