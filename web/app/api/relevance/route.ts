@@ -9,9 +9,10 @@ const ENDPOINT = 'https://api.typesafe.ai/v1/systemone'
 const MAX_SAVES = 60
 /* The key is a prepaid balance, so a loop against this endpoint is the cost.
    A read takes about 5k tokens, and the whole balance is a few tens of
-   thousands of them: cheap to spend, cheap to defend. */
-const PER_MINUTE = 20
-const BURST = 8
+   thousands of them: cheap to spend, cheap to defend. One typed sentence is
+   six to eight reads, so the burst has to hold a few sentences back to back. */
+const PER_MINUTE = 60
+const BURST = 24
 
 type Candidate = { id: string; title: string }
 

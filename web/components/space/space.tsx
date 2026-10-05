@@ -730,9 +730,11 @@ function SpaceInner() {
       .then((r) => r.json())
       .then((d: { rel?: Record<string, number> }) => {
         if (ac.signal.aborted) return
-        const scores = d.rel && Object.keys(d.rel).length ? d.rel : null
+        /* A refused or failed read keeps the last good one on screen, so the
+           fade and the sort never disagree. */
+        if (!d.rel || !Object.keys(d.rel).length) return
+        const scores = d.rel
         setRel(scores)
-        if (!scores) return
         /* The saves that match come to the middle. The layout they leave is
            the resting one, so the next word re-sorts rather than compounds. */
         const base = restCells.current ?? cells
@@ -1172,10 +1174,10 @@ function SpaceInner() {
                 endRead()
                 return
               }
-              /* Short, so a finished word lands almost as you finish it, and
-                 a word still being typed re-sorts too. In-flight reads are
-                 aborted, so only the newest one ever arrives. */
-              readTimer.current = window.setTimeout(() => read(v), /\s$/.test(v) ? 40 : 160)
+              /* A finished word reads almost at once. Half a word only reads
+                 once you stop on it, since "noo" means nothing to Jev. In-flight
+                 reads are aborted, so only the newest one ever arrives. */
+              readTimer.current = window.setTimeout(() => read(v), /\s$/.test(v) ? 40 : 400)
             }}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
