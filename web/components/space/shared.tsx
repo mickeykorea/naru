@@ -71,8 +71,11 @@ export function thumbUrl(save: Save) {
    The mock thumbnails are local files that decode before the first frame, so
    the skeleton would never be seen. Each slot therefore holds it for a
    deterministic beat, keyed off the src, and the grid fills in the way a
-   real archive does. Drop `hold` when the images come off the network. */
+   real archive does. Only while the page is arriving: a tile that mounts
+   later, pulled in by a read or scrolled to, is already on disk and should
+   just be there. Drop `hold` when the images come off the network. */
 const HOLD_MIN = 260
+const BOOT_MS = 2500
 const HOLD_SPREAD = 620
 const beat = (src: string) => {
   let h = 0
@@ -82,12 +85,12 @@ const beat = (src: string) => {
 
 export function Pic({ src, className = '', alt = '', lazy = false, hold = true, style }: { src: string; className?: string; alt?: string; lazy?: boolean; hold?: boolean; style?: React.CSSProperties }) {
   const [state, setState] = useState<'loading' | 'done' | 'failed'>('loading')
-  const [held, setHeld] = useState(!hold)
+  const [held, setHeld] = useState(() => !hold || performance.now() > BOOT_MS)
   useEffect(() => {
-    if (!hold) return
+    if (held) return
     const id = window.setTimeout(() => setHeld(true), beat(src))
     return () => window.clearTimeout(id)
-  }, [hold, src])
+  }, [held, src])
   const shown = held ? state : 'loading'
   return (
     <span className={`pic-slot ${className}`} style={style} data-state={shown}>
