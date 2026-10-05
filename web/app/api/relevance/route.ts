@@ -1,20 +1,19 @@
-/* Scores the saves on screen against the thought being typed.
+/* Scores everything in the archive against the thought being typed.
 
-   Jev answers a noul per save in one round trip, so every save gets its own
-   probability rather than competing for one. Roughly 300ms for sixty saves.
-   The key stays here; the browser never sees it. */
+   Jev answers a noul per picture in one round trip, so each gets its own
+   probability rather than competing for one. About 560 of them, 16k tokens,
+   600ms. The list lives here, so the browser sends only the thought, and the
+   key stays here too. */
 import { NextResponse } from 'next/server'
+import { LOOKS } from '@/lib/seed/looks'
 
 const ENDPOINT = 'https://api.typesafe.ai/v1/systemone'
-const MAX_SAVES = 60
 /* The key is a prepaid balance, so a loop against this endpoint is the cost.
-   A read takes about 5k tokens, and the whole balance is a few tens of
-   thousands of them: cheap to spend, cheap to defend. One typed sentence is
+   A read takes about 20k tokens, and the whole balance is a few thousand
+   of them: cheap to spend, cheap to defend. One typed sentence is
    six to eight reads, so the burst has to hold a few sentences back to back. */
 const PER_MINUTE = 60
 const BURST = 24
-
-type Candidate = { id: string; title: string }
 
 /* Per instance, so it is a speed bump rather than a wall: a serverless
    function that scales out forgets what the other copies have seen. The real
@@ -51,26 +50,15 @@ export async function POST(req: Request) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'local'
   if (!allow(ip)) return NextResponse.json({ rel: {} }, { status: 429 })
 
-  const { thought, saves } = (await req.json()) as { thought?: string; saves?: Candidate[] }
+  const { thought } = (await req.json()) as { thought?: string }
   const text = (thought ?? '').trim().slice(0, 300)
-  const list = (saves ?? []).slice(0, MAX_SAVES)
   /* One short word is a real query: 'pottery' should already sort the grid. */
-  if (text.length < 3 || list.length === 0) return NextResponse.json({ rel: {} })
+  if (text.length < 3) return NextResponse.json({ rel: {} })
 
   const questions = Object.fromEntries(
-    list.map((s) => [
-      s.id,
-      {
-        type: 'noul',
-        instructions: {
-          save: s.title,
-          question: 'Is this `save` related to the `thought`? Related means it supports the thought, contradicts it, shows what it could look like, or is precedent for it.',
-        },
-        criteria: {
-          true: 'The save would earn a place in a brief about this thought',
-          false: 'The save is about something else entirely',
-        },
-      },
+    Object.entries(LOOKS).map(([k, look]) => [
+      k,
+      { type: 'noul', instructions: { save: look, question: 'Would this `save` belong on a moodboard for the `thought`?' } },
     ]),
   )
 

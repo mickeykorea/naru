@@ -65,6 +65,9 @@ export function thumbUrl(save: Save) {
   return `/mock/thumbs/${save.theme ?? 'loose'}-${k}.jpg`
 }
 
+/* What a tile shows, as the relevance route keys it (lib/seed/looks.ts). */
+export const lookKey = (save: Save) => (save.image || save.cover ? thumbUrl(save) : `text:${save.id}`)
+
 /* A thumbnail that holds its own space: the skeleton is exactly the size the
    image will be, so nothing shifts when the bytes land.
 

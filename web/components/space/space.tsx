@@ -17,7 +17,7 @@ import { LANE_ORDER, themes, type Idea, type Lane, type Source } from '@/lib/see
 import { ideaFor } from '@/lib/seed/ideas'
 import { big, bigById, countBySource, SOURCE_LIST, type BigSave } from '@/lib/seed/data-big'
 import { IdeaDoc } from './idea-doc'
-import { Glyph, LANES, Mark, Pic, POOL, thumbIndex, thumbUrl } from './shared'
+import { Glyph, LANES, lookKey, Mark, Pic, POOL, thumbIndex, thumbUrl } from './shared'
 import { Space3D } from './space-3d'
 import { SaveCard } from './save-card'
 
@@ -387,6 +387,9 @@ function applyGather(prev: Record<string, Cell>, centre: Cell, ids: string[], la
   return next
 }
 
+/* How many a typed thought pulls to the middle: the 5×5 around it. */
+const RING = 24
+
 /* Sorts the saves that were read into the grid by score: the strongest takes
    the cell closest to the centre of the screen, the weakest ends up furthest
    out, and whoever was standing there swaps into the vacated cell. Grid-
@@ -481,15 +484,18 @@ function SpaceInner() {
   const [gathering, setGathering] = useState(false)
   const [busy, setBusy] = useState(false)
   const [tip, setTip] = useState(false)
-  /* Live reading. While you type, the saves on screen are scored one by one
-     against the thought and each carries its own probability: opacity, and a
-     lean toward the middle. One call when you pause, not one per keystroke,
-     and only what is mounted, because the whole archive would be a hundred
-     thousand tokens a request. */
+  /* Live reading. While you type, every picture in the archive is scored
+     against the thought. The best two dozen come to the middle of the screen
+     from wherever they were, and they alone stay lit. One call per word, not
+     per keystroke. */
   const [rel, setRel] = useState<Record<string, number> | null>(null)
   const [reading, setReading] = useState(false)
   const readTimer = useRef<number | null>(null)
-  const readAbort = useRef<AbortController | null>(null)
+  /* Reads overlap: a word takes about as long to answer as the next one
+     takes to type, so cancelling would mean nothing lands until you stop.
+     Each read is numbered and only one newer than what is showing gets in. */
+  const readN = useRef(0)
+  const readShown = useRef(0)
   /* The layout as it stood before you started typing. Every word re-sorts from
      this, not from the last arrangement, so the field never drifts and an
      empty field puts it back exactly. */
@@ -502,7 +508,7 @@ function SpaceInner() {
      ring re-sorts and the tally comes back a second after you cleared it. */
   const endRead = useCallback(() => {
     if (readTimer.current) window.clearTimeout(readTimer.current)
-    readAbort.current?.abort()
+    readShown.current = ++readN.current
     setRel(null)
     setReading(false)
     if (restCells.current) {
@@ -525,7 +531,6 @@ function SpaceInner() {
   useEffect(() => () => {
     if (argueTimer.current) window.clearTimeout(argueTimer.current)
     if (readTimer.current) window.clearTimeout(readTimer.current)
-    readAbort.current?.abort()
   }, [])
   const [doc, setDoc] = useState<Tile | null>(null)
   const [view3d, setView3d] = useState(false)
@@ -706,48 +711,49 @@ function SpaceInner() {
     return [Math.round(cx / pitch), Math.round(cy / pitch)]
   }, [flow, cellPx, pitch])
 
-  /* Ask Jev which of the saves on screen belong to what is being typed. */
+  /* Ask Jev which pictures in the archive belong to what is being typed. */
   const read = useCallback((thought: string) => {
-    readAbort.current?.abort()
+    const n = ++readN.current
     const centre = centreCell()
-    const near = big
-      .filter((s) => cells[s.id])
-      .map((s) => ({ s, d: Math.max(Math.abs(cells[s.id][0] - centre[0]), Math.abs(cells[s.id][1] - centre[1])) }))
-      .filter((x) => x.d <= 5)
-      .sort((a, b) => a.d - b.d)
-      .slice(0, 60)
-      .map((x) => ({ id: x.s.id, title: x.s.title }))
-    if (!near.length) return
-    const ac = new AbortController()
-    readAbort.current = ac
     setReading(true)
     fetch('/api/relevance', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ thought, saves: near }),
-      signal: ac.signal,
+      body: JSON.stringify({ thought }),
     })
       .then((r) => r.json())
       .then((d: { rel?: Record<string, number> }) => {
-        if (ac.signal.aborted) return
+        if (n <= readShown.current) return
         /* A refused or failed read keeps the last good one on screen, so the
            fade and the sort never disagree. */
-        if (!d.rel || !Object.keys(d.rel).length) return
-        const scores = d.rel
+        const looks = d.rel
+        if (!looks || !Object.keys(looks).length) return
+        readShown.current = n
+        /* One save per picture, so the ring never shows the same image twice,
+           and only what Jev is at least even on. */
+        const seen = new Set<string>()
+        const ranked: string[] = []
+        const scores: Record<string, number> = {}
+        for (const s of [...big].sort((a, b) => (looks[lookKey(b)] ?? 0) - (looks[lookKey(a)] ?? 0))) {
+          const k = lookKey(s)
+          const p = looks[k] ?? 0
+          if (p < 0.5 || ranked.length === RING) break
+          if (seen.has(k) || !cells[s.id]) continue
+          seen.add(k)
+          ranked.push(s.id)
+          scores[s.id] = p
+        }
         setRel(scores)
-        /* The saves that match come to the middle. The layout they leave is
-           the resting one, so the next word re-sorts rather than compounds. */
+        /* The layout they leave is the resting one, so the next word re-sorts
+           rather than compounds. */
         const base = restCells.current ?? cells
         restCells.current = base
-        const ranked = Object.entries(scores)
-          .sort((a, b) => b[1] - a[1])
-          .map(([hid]) => hid)
         const reserved = new Set(tiles.map((x) => key(x.cell)))
         setCells(sortByScore(base, centre, ranked, reserved))
       })
       .catch(() => {})
       .finally(() => {
-        if (!ac.signal.aborted) setReading(false)
+        if (n === readN.current) setReading(false)
       })
   }, [cells, centreCell, tiles])
 
@@ -1175,8 +1181,7 @@ function SpaceInner() {
                 return
               }
               /* A finished word reads almost at once. Half a word only reads
-                 once you stop on it, since "noo" means nothing to Jev. In-flight
-                 reads are aborted, so only the newest one ever arrives. */
+                 once you stop on it, since "noo" means nothing to Jev. */
               readTimer.current = window.setTimeout(() => read(v), /\s$/.test(v) ? 40 : 400)
             }}
             onKeyDown={(e) => {
