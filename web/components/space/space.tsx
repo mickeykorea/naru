@@ -190,13 +190,12 @@ function SaveNode({ data, id }: NodeProps<Node<{ save: BigSave }>>) {
   const sel = ctx.selected === id
   const hop = ctx.hopped.has(id)
   const c = ctx.cellOf(id)
-  /* While a thought is being typed every save carries its own probability, so
-     it fades on its own scale and leans toward the thought rather than being
-     sorted into a lane. Reversible: it is a transform, the grid never moves. */
+  /* While a thought is being typed every save carries its own probability:
+     the ones brought to the middle stay lit, everything else fades. */
   const p = ctx.rel ? (ctx.rel[id] ?? 0) : null
   const style: React.CSSProperties = hop ? { animationDelay: `${(Math.abs(c[0]) + Math.abs(c[1])) * 28}ms` } : {}
   if (p !== null) {
-    style.opacity = 0.12 + 0.88 * p
+    style.opacity = fade(p)
     style.zIndex = Math.round(p * 10)
   }
   return (
@@ -221,12 +220,22 @@ function SaveNode({ data, id }: NodeProps<Node<{ save: BigSave }>>) {
   )
 }
 
+const fade = (p: number) => 0.12 + 0.88 * p
+
 function TileNode({ data, id }: NodeProps<Node<{ tile: Tile }>>) {
   const ctx = useContext(C)
   const t = data.tile
   const dim = !!ctx.lit && !ctx.lit.has(id)
+  /* Ideas are read too. They never move, since each holds a ring, but an
+     idea that has nothing to do with the thought fades like any save. */
+  const p = ctx.rel ? (ctx.rel[id] ?? 0) : null
   return (
-    <button type="button" className={`cell tile ${t.kind}${dim ? ' dim' : ''}`} aria-label={`Open the document for: ${t.text}`}>
+    <button
+      type="button"
+      className={`cell tile ${t.kind}${dim ? ' dim' : ''}${p !== null ? ' reading' : ''}`}
+      style={p !== null ? { opacity: fade(p) } : undefined}
+      aria-label={`Open the document for: ${t.text}`}
+    >
       <span className="display">{t.text}</span>
       <span className="open">
         {t.idea && ctx.revealed === t.id ? tally(t.idea) : t.evidence.length ? `${t.evidence.length}\u00a0related saves` : 'No related saves. Save around it and gather again.'}
@@ -719,7 +728,7 @@ function SpaceInner() {
     fetch('/api/relevance', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ thought }),
+      body: JSON.stringify({ thought, ideas: tiles.map((t) => ({ id: t.id, text: t.text })) }),
     })
       .then((r) => r.json())
       .then((d: { rel?: Record<string, number> }) => {
@@ -742,6 +751,10 @@ function SpaceInner() {
           seen.add(k)
           ranked.push(s.id)
           scores[s.id] = p
+        }
+        for (const t of tiles) {
+          const p = looks[t.id] ?? 0
+          scores[t.id] = p >= 0.5 ? p : 0
         }
         setRel(scores)
         /* The layout they leave is the resting one, so the next word re-sorts

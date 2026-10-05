@@ -1,4 +1,5 @@
-/* Scores everything in the archive against the thought being typed.
+/* Scores everything in the archive, and the ideas on the canvas, against the
+   thought being typed.
 
    Jev answers a noul per picture in one round trip, so each gets its own
    probability rather than competing for one. About 560 of them, 16k tokens,
@@ -8,6 +9,10 @@ import { NextResponse } from 'next/server'
 import { LOOKS } from '@/lib/seed/looks'
 
 const ENDPOINT = 'https://api.typesafe.ai/v1/systemone'
+/* Ideas are the one thing the browser sends, since you can make new ones.
+   Bounded, and keyed so they can never overwrite an archive entry. */
+const MAX_IDEAS = 40
+const IDEA_ID = /^tile:[\w-]{1,40}$/
 /* The key is a prepaid balance, so a loop against this endpoint is the cost.
    A read takes about 20k tokens, and the whole balance is a few thousand
    of them: cheap to spend, cheap to defend. One typed sentence is
@@ -50,13 +55,18 @@ export async function POST(req: Request) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'local'
   if (!allow(ip)) return NextResponse.json({ rel: {} }, { status: 429 })
 
-  const { thought } = (await req.json()) as { thought?: string }
+  const { thought, ideas } = (await req.json()) as { thought?: string; ideas?: unknown }
   const text = (thought ?? '').trim().slice(0, 300)
   /* One short word is a real query: 'pottery' should already sort the grid. */
   if (text.length < 3) return NextResponse.json({ rel: {} })
 
+  const mine = (Array.isArray(ideas) ? ideas : [])
+    .filter((x): x is { id: string; text: string } => typeof x?.id === 'string' && IDEA_ID.test(x.id) && typeof x?.text === 'string')
+    .slice(0, MAX_IDEAS)
+    .map((x) => [x.id, `an earlier idea: ${x.text.slice(0, 200)}`] as const)
+
   const questions = Object.fromEntries(
-    Object.entries(LOOKS).map(([k, look]) => [
+    [...Object.entries(LOOKS), ...mine].map(([k, look]) => [
       k,
       { type: 'noul', instructions: { save: look, question: 'Would this `save` belong on a moodboard for the `thought`?' } },
     ]),
